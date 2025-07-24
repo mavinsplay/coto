@@ -1,0 +1,33 @@
+{% load i18n %}
+
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">{% trans "Загрузить серию" %}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form hx-post="{% url 'upload:series_upload' %}" 
+              hx-encoding="multipart/form-data">
+            <div class="modal-body">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="invalid-feedback">{{ field.errors }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {% trans "Отмена" %}
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    {% trans "Загрузить" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

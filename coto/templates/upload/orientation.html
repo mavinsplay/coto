@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">{% trans "Загрузка видео" %}</h1>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{% trans "Загрузить фильм" %}</h5>
+                    <p class="card-text">{% trans "Загрузите полнометражный фильм или аниме" %}</p>
+                    <button type="button" 
+                            class="btn btn-primary"
+                            hx-get="{% url 'upload:single_upload' %}"
+                            hx-target="#uploadModal .modal-content"
+                            hx-trigger="click">
+                        {% trans "Загрузить фильм" %}
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">{% trans "Загрузить сериал" %}</h5>
+                    <p class="card-text">{% trans "Загрузите серию сериала или аниме" %}</p>
+                    <button type="button" 
+                            class="btn btn-primary"
+                            hx-get="{% url 'upload:series_upload' %}"
+                            hx-target="#uploadModal .modal-content"
+                            hx-trigger="click">
+                        {% trans "Загрузить серию" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <!-- Сюда будет загружено содержимое -->
+        </div>
+    </div>
+</div>
+
+<!-- Уведомления -->
+<div id="notifications" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Инициализация модального окна
+        const modalEl = document.getElementById('uploadModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        // Показ модального окна после загрузки контента
+        htmx.on('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.matches('#uploadModal .modal-content')) {
+                modal.show();
+            }
+        });
+
+        // Обработка успешной загрузки
+        document.body.addEventListener('videoUploaded', function() {
+            modal.hide();
+        });
+
+        // Обработка сообщений
+        document.body.addEventListener('showMessage', function(evt) {
+            const toast = document.createElement('div');
+            toast.className = 'toast align-items-center text-white bg-success border-0';
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${evt.detail.message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            document.getElementById('notifications').appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+
+            // Удаление toast после скрытия
+            toast.addEventListener('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        });
+    });
+</script>
+{% endblock %}
