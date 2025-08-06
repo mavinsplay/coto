@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% load static %}
+{% load i18n %}
+<h1 class="mb-4">{% trans "Комнаты для совместного просмотра" %}</h1>
+
+<form method="get" class="mb-4">
+    <div class="input-group">
+        <input type="text" name="q" class="form-control" placeholder="Поиск по названию" value="{{ request.GET.q }}">
+        <button class="btn btn-outline-secondary" type="submit">{% trans "Найти" %}</button>
+    </div>
+</form>
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for room in rooms %}
+    <div class="col">
+        <div class="card h-100">
+                {% if room.room_image %}
+                <img src="{{ room.room_image.url }}" class="card-img-top" alt="{{ room.name }}"
+                    style="height: 200px; width: 100%; object-fit: cover;">
+                {% else %}
+                    <img src="{% static 'images/default-room.jpg' %}" class="card-img-top" alt="По умолчанию"
+                        style="height: 200px; width: 100%; object-fit: cover;">
+                {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ room.name }}</h5>
+                <p class="card-text">
+                    Видео: {{ room.video.title }}<br>
+                    Организатор: {{ room.host.username }}<br>
+                    Участников: {{ room.participants.count }} / {{ room.limit_participants }}
+                </p>
+                {% if user.is_authenticated %}
+                    {% if user in room.participants.all %}
+                        <form method="post" action="{% url 'rooms:leave' room.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-danger" type="submit">{% trans "Отключиться" %}</button>
+                            <a href="{% url 'rooms:detail' room.pk %}" class="btn btn-secondary mt-4">{% trans "Назад к комнате" %}</a>
+
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'rooms:join' room.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-success" type="submit">{% trans "Подключиться" %}</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <p><a href="{% url 'login' %}">{% trans "Войдите" %}</a>{% trans ", чтобы подключиться к комнате." %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col">
+        <div class="alert alert-warning w-100">{% trans "Нет доступных комнат." %}</div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if is_paginated %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{% trans "Назад" %}</a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+            <span class="page-link">{% trans "Страница" %} {{ page_obj.number }} {% trans "из" %} {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{% trans "Вперёд" %}</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

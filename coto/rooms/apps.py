@@ -1,11 +1,10 @@
 from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 
+__all__ = ["RoomsConfig"]
 
-__all__ = ["UploadConfig"]
 
-
-class UploadConfig(AppConfig):
+class RoomsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "upload"
-    verbose_name = _("Загрузка видео")
+    name = "rooms"
+    verbose_name = _("Комнаты")

@@ -2,10 +2,10 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from upload.models import Video, WatchParty
+from upload.models import Video
 
 
-__all__ = ["VideoAdmin", "WatchPartyAdmin"]
+__all__ = ["VideoAdmin"]
 
 
 @admin.register(Video)
@@ -17,6 +17,7 @@ class VideoAdmin(admin.ModelAdmin):
         "created_at",
         "views",
         "get_human_duration",
+        "get_human_filesize",
     )
     list_filter = ("uploaded_by", "created_at")
     search_fields = ("title", "description", "uploaded_by__username")
@@ -109,10 +110,18 @@ class VideoAdmin(admin.ModelAdmin):
 
     get_human_duration.short_description = _("Длительность")
 
+    def get_human_filesize(self, obj):
+        size = obj.file_size
+        if size is None:
+            return _("неизвестно")
 
-@admin.register(WatchParty)
-class WatchPartyAdmin(admin.ModelAdmin):
-    list_display = ("name", "video", "host", "created_at")
-    list_filter = ("host", "created_at")
-    search_fields = ("name", "host__username", "video__title")
-    filter_horizontal = ("participants",)
+        units = ["Б", "КБ", "МБ", "ГБ", "ТБ"]
+        for unit in units:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+
+            size /= 1024.0
+
+        return f"{size:.1f} ПБ"
+
+    get_human_filesize.short_description = _("Размер файла")

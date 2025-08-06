@@ -14,14 +14,24 @@
       <div class="offcanvas-body">
         <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="#">{% trans "Homepage" %}</a>
+            <a class="nav-link" aria-current="page" href="{% url "homepage:homepage" %}">{% trans "домашняя страница" %}</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url "upload:orientation" %}">{% trans "Загрузить видео" %}</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url "rooms:list" %}">{% trans "Комнаты" %}</a>
+          </li>
+          {% if request.user.is_authenticated and request.user.is_staff %}
+          <li class="nav-item">
+            <a class="btn btn-primary" href="{% url 'admin:index' %}">
+              {% trans "Admin-panel" %}
+            </a>
+          </li>
+          {% endif %}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              PROFILE GOTO
+              PROFILE TODO
             </a>
             <ul class="dropdown-menu">
               <li><a class="dropdown-item" href="#">Action</a></li>
