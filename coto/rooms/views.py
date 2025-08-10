@@ -1,3 +1,7 @@
+import json
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
@@ -47,6 +51,39 @@ class JoinRoomView(LoginRequiredMixin, View):
                 f"Вы присоединились к комнате «{room.name}».",
             )
 
+            # Отправляем системное сообщение и список участников
+            channel_layer = get_channel_layer()
+            participants = list(
+                room.participants.values_list("username", flat=True),
+            )
+            async_to_sync(channel_layer.group_send)(
+                f"watchparty_{room.pk}",
+                {
+                    "type": "broadcast",
+                    "text": json.dumps(
+                        {
+                            "type": "message",
+                            "message": f"{request.user.username} \
+                                присоединился к комнате",
+                            "system": True,
+                            "username": request.user.username,
+                        },
+                    ),
+                },
+            )
+            async_to_sync(channel_layer.group_send)(
+                f"watchparty_{room.pk}",
+                {
+                    "type": "broadcast",
+                    "text": json.dumps(
+                        {
+                            "type": "participants",
+                            "participants": participants,
+                        },
+                    ),
+                },
+            )
+
         return redirect(reverse("rooms:detail", kwargs={"pk": room.pk}))
 
 
@@ -55,4 +92,35 @@ class LeaveRoomView(LoginRequiredMixin, View):
         room = get_object_or_404(WatchParty, pk=pk)
         room.participants.remove(request.user)
         messages.success(request, f"Вы покинули комнату «{room.name}».")
+
+        channel_layer = get_channel_layer()
+        participants = list(
+            room.participants.values_list("username", flat=True),
+        )
+        async_to_sync(channel_layer.group_send)(
+            f"watchparty_{room.pk}",
+            {
+                "type": "broadcast",
+                "text": json.dumps(
+                    {
+                        "type": "message",
+                        "message": f"{request.user.username} покинул комнату",
+                        "system": True,
+                        "username": request.user.username,
+                    },
+                ),
+            },
+        )
+        async_to_sync(channel_layer.group_send)(
+            f"watchparty_{room.pk}",
+            {
+                "type": "broadcast",
+                "text": json.dumps(
+                    {
+                        "type": "participants",
+                        "participants": participants,
+                    },
+                ),
+            },
+        )
         return redirect(reverse("rooms:list"))

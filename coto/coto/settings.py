@@ -26,6 +26,8 @@ ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "coto-o2o.ru").split(
     ",",
 )
 
+CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS").split(",")
+
 SITE_URL = os.getenv("DJANGO_SITE_URL", "http://127.0.0.1:8000")
 
 DEFAULT_USER_IS_ACTIVE = utils.get_bool_env(
@@ -48,6 +50,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 INSTALLED_APPS = [
+    # Third-party apps
+    "daphne",
+    "channels",
     # Django apps
     "django.contrib.admin",
     "django.contrib.auth",
@@ -94,8 +99,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "coto.wsgi.application"
-
+ASGI_APPLICATION = "coto.asgi.application"
 
 SELECTED_DATABASE = os.getenv(
     "DJANGO_DATABASE_SELECT",
@@ -190,10 +194,27 @@ LOCALE_PATHS = [
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+DEBUG_LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
+
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
+        "colored": {
+            "()": "colorlog.ColoredFormatter",
+            "format": "%(log_color)s[%(levelname)s] %(asctime)s %(name)s: %(message)s",  # noqa: E501
+            "log_colors": {
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
+            "style": "%",
+        },
         "verbose": {
             "format": "[{levelname}] {asctime} {name}: {message}",
             "style": "{",
@@ -205,21 +226,32 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "DEBUG" if DEBUG else "WARNING",
             "class": "logging.StreamHandler",
             "stream": sys.stdout,
-            "formatter": "verbose" if DEBUG else "simple",
+            "formatter": "colored" if DEBUG else "simple",
+            "level": DEBUG_LOG_LEVEL,
+        },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "debug.log",
+            "formatter": "verbose",
         },
     },
     "loggers": {
         "django": {
-            "handlers": ["console"],
+            "handlers": ["console", "file"] if DEBUG else ["console"],
             "level": "INFO",
             "propagate": True,
         },
         "upload": {
             "handlers": ["console"],
             "level": "DEBUG" if DEBUG else "WARNING",
+            "propagate": False,
+        },
+        "rooms": {
+            "handlers": ["console"],
+            "level": "DEBUG" if DEBUG else "INFO",
             "propagate": False,
         },
     },
@@ -254,6 +286,17 @@ CACHES = {
         },
     },
 }
+
+# channels
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [REDIS_URI],
+        },
+    },
+}
+
 
 if DEBUG:
     MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 from upload.models import Video
 
@@ -50,3 +51,30 @@ class WatchParty(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ChatMessage(models.Model):
+    room = models.ForeignKey(
+        "rooms.WatchParty",
+        on_delete=models.CASCADE,
+        related_name="messages",
+        verbose_name=_("Комната"),
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name=_("пользователь"),
+    )
+    content = models.TextField(verbose_name=_("Собщение"))
+    is_system = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        verbose_name = _("Сообщение чата")
+        verbose_name_plural = _("Сообщений чата")
+
+    def __str__(self):
+        return f"[{self.room}] {self.user}: {self.content[:20]}"

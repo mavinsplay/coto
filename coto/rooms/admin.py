@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from rooms.models import WatchParty
+from rooms.models import ChatMessage, WatchParty
 
 __all__ = ["WatchPartyAdmin"]
 
@@ -40,3 +40,16 @@ class WatchPartyAdmin(admin.ModelAdmin):
         return f"{count_participants} / {obj.limit_participants}"
 
     count_participants.short_description = _("количество участников")
+
+
+@admin.register(ChatMessage)
+class ChatAdmin(admin.ModelAdmin):
+    list_display = ("room", "user", "content", "created_at")
+    list_filter = ("room", "user", "created_at")
+    search_fields = ("content", "user__username")
+    ordering = ("-created_at",)
+
+    def room(self, obj):
+        return obj.room.name if obj.room else _("Удалено")
+
+    room.short_description = _("Комната")

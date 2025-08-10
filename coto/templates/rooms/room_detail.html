@@ -1,495 +1,102 @@
-{% extends "base.html" %} 
- 
-{% block content %} 
-<div class="container"> 
-  {% load static %} 
-  <div class="room-header text-center"> 
-    <h1 class="display-5">{{ room.name }}</h1> 
-    <p class="text-muted"> 
-      Организатор: <strong>{{ room.host.username }}</strong> | 
-      Участников: <strong>{{ room.participants.count }} / {{ room.limit_participants }}</strong> 
-    </p> 
-  </div> 
- 
-  <div class="row"> 
-    <!-- Видео --> 
-    <div class="col-lg-8 mb-4"> 
-      <div class="card shadow-sm"> 
-        <div class="card-body p-0"> 
-          <div class="video-wrapper"> 
-            <video 
-              id="hls-player" 
-              class="video-js vjs-default-skin vjs-big-play-centered vjs-fluid" 
-              controls 
-              preload="auto" 
-              width="100%" 
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+  <div class="room-header text-center">
+    <h1 class="display-5">{{ room.name }}</h1>
+    <p class="text-muted">
+      Организатор: <strong>{{ room.host.username }}</strong> |
+      Участников: <strong>{{ room.participants.count }} / {{ room.limit_participants }}</strong>
+    </p>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="video-wrapper">
+            <video
+              id="hls-player"
+              class="video-js vjs-default-skin vjs-big-play-centered vjs-fluid"
+              controls
+              preload="auto"
+              width="100%"
               height="400"
-              data-setup='{"fluid": true, "responsive": true, "playbackRates": [0.5, 0.75, 1, 1.25, 1.5, 2], "liveui": true}'> 
-              <source src="{{ room.video.hls_manifest.url }}" type="application/x-mpegURL"> 
+              data-room-id="{{ room.pk }}"
+              data-is-host="{% if user == room.host %}true{% else %}false{% endif %}"
+              data-hls-url="{{ room.video.hls_manifest.url }}"
+            >
+              <source src="{{ room.video.hls_manifest.url }}" type="application/x-mpegURL" />
               <p class="vjs-no-js">
-                Для просмотра видео включите JavaScript и обновите браузер до 
-                <a href="https://videojs.com/html5-video-support/" target="_blank">
-                  версии с поддержкой HTML5
-                </a>.
+                Для просмотра видео включите JavaScript и обновите браузер до
+                <a href="https://videojs.com/html5-video-support/" target="_blank">версии с поддержкой HTML5</a>.
               </p>
-            </video> 
-          </div> 
-        </div> 
-      </div> 
-    </div> 
- 
-    <!-- Чат и действия --> 
-    <div class="col-lg-4 mb-6"> 
-      <div class="card shadow-sm"> 
-        <div class="card-header"><strong>Чат</strong></div> 
-        <div class="card-body chat-box"> 
-          <p class="text-muted text-center">Чат появится в следующем обновлении.</p> 
-        </div> 
-      </div> 
- 
-      <div class="d-grid gap-2 mt-2"> 
-        {% if user.is_authenticated %} 
-          {% if user in room.participants.all %} 
-            <form method="post" action="{% url 'rooms:leave' room.pk %}"> 
-              {% csrf_token %} 
-              <button class="btn btn-outline-danger btn-lg" type="submit">Отключиться</button> 
-            </form> 
-          {% else %} 
-            <form method="post" action="{% url 'rooms:join' room.pk %}"> 
-              {% csrf_token %} 
-              <button class="btn btn-primary btn-lg" type="submit">Подключиться</button> 
-            </form> 
-          {% endif %} 
-        {% else %} 
-          <a href="{% url 'login' %}" class="btn btn-secondary btn-lg">Войдите, чтобы подключиться</a> 
-        {% endif %} 
- 
-        <a href="{% url 'rooms:list' %}" class="btn btn-light btn-lg">Назад к списку комнат</a> 
-      </div> 
-    </div> 
-  </div> 
-</div> 
+            </video>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<!-- Кастомные стили для Video.js -->
-<style>
-.video-wrapper {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
+    <div class="col-lg-4 mb-6" id="chat-container" data-room-id="{{ room.pk }}">
+      <div class="card shadow-sm" style="height: 480px; display: flex; flex-direction: column;">
+        <div class="card-header"><strong>Чат</strong></div>
+        <div class="card-body chat-box flex-grow-1 overflow-auto" id="chat-messages" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Сообщения сюда -->
+        </div>
+        <div class="card-footer">
+          <form id="chat-form" class="d-flex">
+            <input type="text" id="chat-input" class="form-control me-2" placeholder="Введите сообщение..." autocomplete="off">
+            <button class="btn btn-primary" type="submit">Отправить</button>
+          </form>
+        </div>
+      </div>
+    </div>
+   </div>
 
-/* Основные стили Video.js */
-.video-js {
-  border-radius: 8px;
-  background-color: #000;
-}
+  <div class="card shadow-sm mt-3">
+    <div class="card-header"><strong>Участники</strong></div>
+    <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+      <ul id="participants-list" class="list-unstyled mb-0"></ul>
+    </div>
+  </div>
 
-/* Большая кнопка воспроизведения */
-.video-js .vjs-big-play-button {
-  font-size: 2.5em;
-  line-height: 1.63;
-  height: 1.63em;
-  width: 3em;
-  border: 0.06666em solid #fff;
-  background-color: rgba(43, 51, 63, 0.7);
-  border-radius: 50%;
-  transition: all 0.4s;
-  top: 50%;
-  left: 50%;
-  margin-top: -0.81em;
-  margin-left: -1.5em;
-}
+      <div class="d-grid gap-2 mt-2">
+        {% if user.is_authenticated %}
+          {% if user in room.participants.all %}
+            <form method="post" action="{% url 'rooms:leave' room.pk %}">
+              {% csrf_token %}
+              <button class="btn btn-outline-danger btn-lg" type="submit">Отключиться</button>
+            </form>
+          {% else %}
+            <form method="post" action="{% url 'rooms:join' room.pk %}">
+              {% csrf_token %}
+              <button class="btn btn-primary btn-lg" type="submit">Подключиться</button>
+            </form>
+          {% endif %}
+        {% else %}
+          <a href="{% url 'login' %}" class="btn btn-secondary btn-lg">Войдите, чтобы подключиться</a>
+        {% endif %}
+        <a href="{% url 'rooms:list' %}" class="btn btn-light btn-lg">Назад к списку комнат</a>
+      </div>
+    </div>
+  </div>
+</div>
 
-.video-js .vjs-big-play-button:hover {
-  background-color: rgba(43, 51, 63, 0.9);
-  border-color: #007bff;
-  transform: scale(1.1);
-}
+{% endblock %}
 
-.video-js .vjs-big-play-button .vjs-icon-placeholder:before {
-  color: #fff;
-}
+{% block extra_js %}
+  <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
+  <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.10.0/dist/videojs-http-streaming.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-quality-levels@4.0.0/dist/videojs-contrib-quality-levels.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/videojs-hls-quality-selector@1.1.4/dist/videojs-hls-quality-selector.min.js"></script>
 
-/* Панель управления */
-.video-js .vjs-control-bar {
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.8) 100%);
-  height: 4em;
-  padding: 0 1em;
-}
+  <link rel="stylesheet" href="{% static 'css/video.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+  <script src="{% static 'js/sync_player.js' %}"></script>
+  <script src="{% static 'js/Video.js' %}"></script>
+  <script src="{% static 'js/chat.js' %}"></script>
+  <script>window.currentUser = "{{ user.username }}";</script>
 
-/* Прогресс бар */
-.video-js .vjs-progress-control {
-  position: absolute;
-  top: -1em;
-  left: 0;
-  right: 0;
-  height: 1em;
-  background: transparent;
-}
-
-.video-js .vjs-progress-holder {
-  height: 0.3em;
-  margin: 0;
-  border-radius: 0.15em;
-  background-color: rgba(255, 255, 255, 0.3);
-  transition: height 0.2s ease;
-}
-
-.video-js .vjs-progress-control:hover .vjs-progress-holder {
-  height: 0.5em;
-}
-
-.video-js .vjs-play-progress {
-  border-radius: 0.15em;
-}
-
-.video-js .vjs-progress-control:hover .vjs-play-progress:before {
-  opacity: 1;
-}
-
-.video-js .vjs-load-progress {
-  background: rgba(255, 255, 255, 0.4);
-  border-radius: 0.15em;
-}
-
-/* Кнопки управления */
-.video-js .vjs-control-bar .vjs-button {
-  width: 3em;
-  height: 3em;
-  margin: 0 0.2em;
-  border-radius: 0.3em;
-  transition: all 0.3s ease;
-}
-
-.video-js .vjs-control-bar .vjs-button:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
-}
-
-.video-js .vjs-control-bar .vjs-button .vjs-icon-placeholder:before {
-  font-size: 1.2em;
-  color: #fff;
-}
-
-/* Кнопка воспроизведения */
-.video-js .vjs-play-control {
-  order: 1;
-}
-
-/* Время */
-.video-js .vjs-current-time,
-.video-js .vjs-duration {
-  display: block;
-  font-size: 1em;
-  color: #fff;
-  padding: 0 0.5em;
-  line-height: 3em;
-  font-weight: 500;
-}
-
-.video-js .vjs-current-time {
-  order: 2;
-}
-
-.video-js .vjs-time-divider {
-  order: 3;
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 3em;
-}
-
-.video-js .vjs-duration {
-  order: 4;
-}
-
-/* Громкость */
-.video-js .vjs-volume-panel {
-  order: 5;
-  width: auto;
-}
-
-.video-js .vjs-volume-control {
-  width: 5em;
-  opacity: 0;
-  transition: opacity 0.3s ease, width 0.3s ease;
-}
-
-.video-js .vjs-volume-panel:hover .vjs-volume-control {
-  opacity: 1;
-  width: 5em;
-}
-
-.video-js .vjs-volume-bar {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 0.15em;
-}
-
-.video-js .vjs-volume-level {
-  background: #007bff;
-  border-radius: 0.15em;
-}
-
-/* Полноэкранная кнопка */
-.video-js .vjs-fullscreen-control {
-  order: 6;
-  margin-left: auto;
-}
-
-/* Меню настроек */
-.video-js .vjs-menu-button-popup .vjs-menu {
-  bottom: 3em;
-  background-color: rgba(0, 0, 0, 0.9);
-  border-radius: 0.5em;
-  box-shadow: 0 0.5em 2em rgba(0, 0, 0, 0.5);
-  border: none;
-}
-
-.video-js .vjs-menu-button-popup .vjs-menu .vjs-menu-content {
-  padding: 0.5em 0;
-}
-
-.video-js .vjs-menu li {
-  padding: 0.5em 1em;
-  transition: background-color 0.2s ease;
-  color: #fff;
-}
-
-.video-js .vjs-menu li:hover {
-  background-color: rgba(0, 123, 255, 0.2);
-}
-
-.video-js .vjs-menu li.vjs-selected {
-  background-color: rgba(0, 123, 255, 0.3);
-  color: #007bff;
-}
-
-/* Загрузка */
-.video-js .vjs-loading-spinner {
-  border-color: rgba(0, 123, 255, 0.8) transparent transparent transparent;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-  .video-js .vjs-control-bar {
-    height: 3.5em;
-    padding: 0 0.5em;
-  }
-  
-  .video-js .vjs-control-bar .vjs-button {
-    width: 2.5em;
-    height: 2.5em;
-    margin: 0 0.1em;
-  }
-  
-  .video-js .vjs-current-time,
-  .video-js .vjs-duration {
-    font-size: 0.9em;
-    padding: 0 0.3em;
-    line-height: 2.5em;
-  }
-  
-  .video-js .vjs-big-play-button {
-    font-size: 2em;
-    height: 1.5em;
-    width: 2.5em;
-    margin-top: -0.75em;
-    margin-left: -1.25em;
-  }
-}
-
-/* Темная тема */
-.video-js.vjs-theme-dark .vjs-control-bar {
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0) 50%, rgba(20, 20, 20, 0.9) 100%);
-}
-
-.video-js.vjs-theme-dark .vjs-big-play-button {
-  background-color: rgba(20, 20, 20, 0.8);
-  border-color: #ffffff;
-}
-
-.video-js.vjs-theme-dark .vjs-big-play-button:hover {
-  background-color: rgba(20, 20, 20, 0.95);
-}
-
-/* Кастомизируемые CSS переменные */
-:root {
-  --vjs-theme-primary:rgb(141, 147, 153);
-  --vjs-theme-secondary: #0056b3;
-  --vjs-theme-background: rgba(0, 0, 0, 0.8);
-  --vjs-theme-text: #ffffff;
-}
-</style>
-
-{% endblock %} 
- 
-{% block extra_js %} 
-{% load static %} 
-
-<!-- Video.js CSS и JS -->
-<link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
-<script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
-
-<!-- Video.js HLS поддержка -->
-<script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.10.0/dist/videojs-http-streaming.min.js"></script>
-
-<!-- Дополнительные плагины Video.js -->
-<script src="https://cdn.jsdelivr.net/npm/videojs-contrib-quality-levels@4.0.0/dist/videojs-contrib-quality-levels.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/videojs-hls-quality-selector@1.1.4/dist/videojs-hls-quality-selector.min.js"></script>
-
-<script> 
-document.addEventListener('DOMContentLoaded', function() { 
-  // Инициализация Video.js плеера
-  var player = videojs('hls-player', {
-    // Основные настройки
-    fluid: true,
-    responsive: true,
-    aspectRatio: '16:9',
-    
-    // Настройки воспроизведения
-    preload: 'auto',
-    autoplay: false,
-    muted: false,
-    
-    // Скорости воспроизведения
-    playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
-    
-    // HLS настройки
-    html5: {
-      hls: {
-        enableLowInitialPlaylist: true,
-        smoothQualityChange: true,
-        overrideNative: true
-      }
-    },
-    
-    // Настройки интерфейса
-    controls: true,
-    bigPlayButton: true,
-    
-    // Языковые настройки
-    language: 'ru',
-    
-    // Плагины
-    plugins: {
-      qualityLevels: {},
-      hlsQualitySelector: {
-        displayCurrentQuality: true
-      }
-    }
-  });
-  
-  // Событие готовности плеера
-  player.ready(function() {
-    console.log('Video.js плеер готов к работе');
-    
-    // Добавляем кастомную тему
-    player.addClass('vjs-theme-dark');
-    
-    // Настройки качества видео
-    var qualityLevels = player.qualityLevels();
-    
-    qualityLevels.on('addqualitylevel', function(event) {
-      var qualityLevel = event.qualityLevel;
-      console.log('Добавлен уровень качества:', qualityLevel.height + 'p');
-    });
-    
-    // Автоматическое управление качеством
-    qualityLevels.on('change', function() {
-      console.log('Уровень качества изменен на:', qualityLevels[qualityLevels.selectedIndex].height + 'p');
-    });
-  });
-  
-  // Обработка ошибок
-  player.on('error', function() {
-    var error = player.error();
-    console.error('Ошибка плеера:', error);
-    
-    // Показать пользователю понятное сообщение об ошибке
-    var errorMessages = {
-      1: 'Загрузка видео была прервана',
-      2: 'Произошла сетевая ошибка при загрузке видео',
-      3: 'Ошибка декодирования видео',
-      4: 'Видео недоступно для воспроизведения'
-    };
-    
-    var message = errorMessages[error.code] || 'Произошла неизвестная ошибка';
-    player.error({
-      code: error.code,
-      message: message
-    });
-  });
-  
-  // Обработка событий воспроизведения
-  player.on('play', function() {
-    console.log('Воспроизведение начато');
-  });
-  
-  player.on('pause', function() {
-    console.log('Воспроизведение приостановлено');
-  });
-  
-  player.on('ended', function() {
-    console.log('Воспроизведение завершено');
-  });
-  
-  player.on('loadstart', function() {
-    console.log('Начата загрузка видео');
-  });
-  
-  player.on('canplay', function() {
-    console.log('Видео готово к воспроизведению');
-  });
-  
-  // Управление с клавиатуры
-  player.on('keydown', function(event) {
-    switch(event.which) {
-      case 32: // Пробел - пауза/воспроизведение
-        event.preventDefault();
-        if (player.paused()) {
-          player.play();
-        } else {
-          player.pause();
-        }
-        break;
-      case 37: // Стрелка влево - перемотка назад на 5 сек
-        event.preventDefault();
-        player.currentTime(player.currentTime() - 5);
-        break;
-      case 39: // Стрелка вправо - перемотка вперед на 5 сек
-        event.preventDefault();
-        player.currentTime(player.currentTime() + 5);
-        break;
-      case 38: // Стрелка вверх - увеличить громкость
-        event.preventDefault();
-        player.volume(Math.min(1, player.volume() + 0.1));
-        break;
-      case 40: // Стрелка вниз - уменьшить громкость
-        event.preventDefault();
-        player.volume(Math.max(0, player.volume() - 0.1));
-        break;
-      case 70: // F - полноэкранный режим
-        event.preventDefault();
-        if (player.isFullscreen()) {
-          player.exitFullscreen();
-        } else {
-          player.requestFullscreen();
-        }
-        break;
-      case 77: // M - выключить/включить звук
-        event.preventDefault();
-        player.muted(!player.muted());
-        break;
-    }
-  });
-  
-  // Очистка при уходе со страницы
-  window.addEventListener('beforeunload', function() {
-    if (player) {
-      player.dispose();
-    }
-  });
-  
-  // Глобальная переменная для доступа к плееру из консоли разработчика
-  window.videoPlayer = player;
-}); 
-</script> 
 {% endblock %}
