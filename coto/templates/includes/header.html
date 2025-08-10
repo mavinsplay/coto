@@ -1,6 +1,6 @@
 {% load i18n %}
 {% load static %}
-<nav class="navbar bg-body-tertiary fixed-top">
+<nav class="navbar bg-body-tertiary">
   <div class="container-fluid">
     <a class="navbar-brand" href="{% url "homepage:homepage" %}">Coto</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
@@ -29,19 +29,35 @@
             </a>
           </li>
           {% endif %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              PROFILE TODO
+
+          <div class="mt-3">
+            {% if request.user.is_authenticated %}
+            <div class="dropdown">
+              <button class="btn dropdown-toggle bg-transparent d-flex align-items-center border-1 coto-border" type="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
+                {% if request.user.profile.get_small_avatar %}
+                  <img src="{{ request.user.profile.get_small_avatar }}" class="rounded-circle me-2"
+                  width="32" height="32" alt="">
+                {% else %}
+                  <img src="{% static "images/default_avatar.svg" %}" class="rounded-circle me-2"
+                  width="32" height="32" alt="">
+                {% endif %}
+                <span class="coto-font-medium">{{ request.user.username }}</span>
+              </button>
+              
+              <ul class="dropdown-menu coto-secondary dropdown-menu-end">
+                <li><a class="dropdown-item coto-btn {% if view_name == 'users:profile' %} coto-primary{% endif %}" href="{% url "users:profile" %}">{% trans "Профиль" %}</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item coto-btn {% if view_name == 'users:logout' %} coto-primary{% endif %}" href="{% url "users:logout" %}">{% trans "Выйти" %}</a></li>
+              </ul>
+            </div>
+          {% else %}
+            <a class="btn coto-btn coto-primary{% if view_name == 'users:login' %} coto-btn-pressed{% endif %}"
+              {% if view_name != 'users:login' %}href="{% url 'users:login' %}"{% endif %}>
+              {% trans "Войти" %}
             </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">Action</a></li>
-              <li><a class="dropdown-item" href="#">Another action</a></li>
-              <li>
-                <hr class="dropdown-divider">
-              </li>
-              <li><a class="dropdown-item" href="#">Something else here</a></li>
-            </ul>
-          </li>
+          {% endif %}
+          </div>
         </ul>
       </div>
     </div>

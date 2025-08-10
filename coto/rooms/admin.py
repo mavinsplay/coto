@@ -12,6 +12,7 @@ class WatchPartyAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "video",
+        "playlist",
         "host",
         "created_at",
         "get_thumbnail",

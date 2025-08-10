@@ -7,7 +7,7 @@
     <h1 class="display-5">{{ room.name }}</h1>
     <p class="text-muted">
       Организатор: <strong>{{ room.host.username }}</strong> |
-      Участников: <strong>{{ room.participants.count }} / {{ room.limit_participants }}</strong>
+      Участников: <strong id="participants-count">{{ room.participants.count }}</strong><strong> / {{ room.limit_participants }}</strong>
     </p>
   </div>
 
@@ -39,28 +39,90 @@
     </div>
 
     <div class="col-lg-4 mb-6" id="chat-container" data-room-id="{{ room.pk }}">
-      <div class="card shadow-sm" style="height: 480px; display: flex; flex-direction: column;">
-        <div class="card-header"><strong>Чат</strong></div>
-        <div class="card-body chat-box flex-grow-1 overflow-auto" id="chat-messages" style="display: flex; flex-direction: column; gap: 8px;">
-          <!-- Сообщения сюда -->
+      <div class="card shadow-sm h-100">
+        
+        <!-- Tabs -->
+        <div class="card-header p-0">
+          <ul class="nav nav-tabs nav-fill" id="room-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab" aria-controls="chat-pane" aria-selected="true">
+                💬 Чат
+              </button>
+            </li>
+            {% if room.playlist %}
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="playlist-tab" data-bs-toggle="tab" data-bs-target="#playlist-pane" type="button" role="tab" aria-controls="playlist-pane" aria-selected="false">
+                📺 Плейлист
+              </button>
+            </li>
+            {% endif %}
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="participants-tab" data-bs-toggle="tab" data-bs-target="#participants-pane" type="button" role="tab" aria-controls="participants-pane" aria-selected="false">
+                👥 Участники (<span id="participants-count">{{ room.participants.count }}</span>/<span>{{ room.limit_participants }}</span>)
+              </button>
+            </li>
+          </ul>
         </div>
-        <div class="card-footer">
-          <form id="chat-form" class="d-flex">
-            <input type="text" id="chat-input" class="form-control me-2" placeholder="Введите сообщение..." autocomplete="off">
-            <button class="btn btn-primary" type="submit">Отправить</button>
-          </form>
+    
+        <!-- Tabs content -->
+        <div class="tab-content flex-grow-1" style="height: 430px; display: flex; flex-direction: column;">
+          
+          <!-- Chat -->
+          <div class="tab-pane fade show active h-100 d-flex flex-column" id="chat-pane" role="tabpanel" aria-labelledby="chat-tab">
+            <div class="card-body chat-box flex-grow-1 overflow-auto p-3" id="chat-messages" style="display:flex; flex-direction:column; gap:8px;">
+              <!-- Сообщения сюда -->
+            </div>
+            <div class="card-footer p-2">
+              <form id="chat-form" class="d-flex" autocomplete="off">
+                <input type="text" id="chat-input" class="form-control me-2" placeholder="Введите сообщение..." autocomplete="off">
+                <button class="btn btn-primary" type="submit">Отправить</button>
+              </form>
+            </div>
+          </div>
+    
+          {% if room.playlist %}
+          <div class="tab-pane fade h-100 overflow-auto p-3" id="playlist-pane" role="tabpanel" aria-labelledby="playlist-tab">
+          
+            <!-- Место для вывода текущей серии -->
+            <div id="current-episode" class="mb-3 p-2 bg-light border rounded fw-bold">Загрузка серии...</div>
+          
+            {% for item in room.playlist.items.all %}
+              <div
+                class="d-flex align-items-center mb-3 playlist-item border rounded p-2"
+                data-hls-url="{{ item.video.hls_manifest.url }}"
+                data-video-id="{{ item.video.id }}"
+                data-season="{{ item.season_number }}"
+                data-episode="{{ item.episode_number }}"
+                data-title="{{ item.video.title }}"
+              >
+                {% if item.video.thumbnail %}
+                  <img src="{{ item.video.thumbnail.url }}" alt="" class="me-3 rounded" style="width:80px; height:45px; object-fit:cover;">
+                {% else %}
+                  <div class="bg-secondary me-3 rounded" style="width:80px; height:45px;"></div>
+                {% endif %}
+                <div class="flex-grow-1">
+                  <div class="fw-bold text-truncate">Сезон {{ item.season_number }}, Серия {{ item.episode_number }}</div>
+                  <div class="text-muted small text-truncate">{{ item.video.title }}</div>
+                </div>
+                <div class="text-muted small ms-2">▶</div>
+              </div>
+              {% empty %}
+                <p class="text-muted">Плейлист пуст</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+          
+    
+          <!-- Participants -->
+          <div class="tab-pane fade h-100 overflow-auto p-3" id="participants-pane" role="tabpanel" aria-labelledby="participants-tab">
+            <ul id="participants-list" class="list-unstyled mb-0"></ul>
+          </div>
         </div>
       </div>
     </div>
-   </div>
 
-  <div class="card shadow-sm mt-3">
-    <div class="card-header"><strong>Участники</strong></div>
-    <div class="card-body" style="max-height: 200px; overflow-y: auto;">
-      <ul id="participants-list" class="list-unstyled mb-0"></ul>
-    </div>
-  </div>
-
+    
+  
       <div class="d-grid gap-2 mt-2">
         {% if user.is_authenticated %}
           {% if user in room.participants.all %}
@@ -97,6 +159,7 @@
   <script src="{% static 'js/sync_player.js' %}"></script>
   <script src="{% static 'js/Video.js' %}"></script>
   <script src="{% static 'js/chat.js' %}"></script>
+  <script src="{% static 'js/playlists.js' %}"></script>
   <script>window.currentUser = "{{ user.username }}";</script>
 
 {% endblock %}

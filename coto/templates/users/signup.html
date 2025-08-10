@@ -9,7 +9,7 @@
 {% block content %}
 <div class="container-md">
   <div class="d-flex justify-content-center align-items-center">
-    <div class="card lambda-secondary rounded rounded-5 lambda-login mt-5">
+    <div class="card coto-secondary rounded rounded-5 coto-login mt-5">
       <div class="card-body">
         <div class="col">
 
@@ -68,7 +68,7 @@
 
             <div class="form-check d-flex justify-content-center mb-4 ">
               <input class="form-check-input me-2" type="checkbox" id="terms" required>
-              <label class="form-check-label lambda-font-medium" for="terms">
+              <label class="form-check-label coto-font-medium" for="terms">
                 {% trans "I accept the terms of the" %} <a href="">{% trans "user agreement" %}</a>
               </label>
             </div>
@@ -81,11 +81,11 @@
                 </div>
               {% endif %}
             <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
-              <button type="submit" class="btn lambda-primary lambda-btn btn-lg">{% trans "Signup_confirm" %}</button>
+              <button type="submit" class="btn coto-primary coto-btn btn-lg">{% trans "Signup_confirm" %}</button>
             </div>
           </form>
           <div class="d-flex justify-content-center align-items-center mt-1">
-            <p class="lambda-font-medium"> {% trans "Already have an account?" %} <a href="{% url 'users:login' %}">{% trans "Login_confirm" %}</a></p>
+            <p class="coto-font-medium"> {% trans "Already have an account?" %} <a href="{% url 'users:login' %}">{% trans "Login_confirm" %}</a></p>
           </div>
 
         </div>

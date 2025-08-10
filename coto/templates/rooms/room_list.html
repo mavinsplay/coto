@@ -3,15 +3,10 @@
 {% block content %}
 {% load static %}
 {% load i18n %}
-<h1 class="mb-4">{% trans "Комнаты для совместного просмотра" %}</h1>
-
-<form method="get" class="mb-4">
-    <div class="input-group">
-        <input type="text" name="q" class="form-control" placeholder="Поиск по названию" value="{{ request.GET.q }}">
-        <button class="btn btn-outline-secondary" type="submit">{% trans "Найти" %}</button>
-    </div>
-</form>
-<div class="row row-cols-1 row-cols-md-3 g-4">
+<div class="m-2">
+    <h1>{% trans "Комнаты для совместного просмотра" %}</h1>
+</div>
+<div class="row row-cols-1 row-cols-md-3 g-4 m-4">
     {% for room in rooms %}
     <div class="col">
         <div class="card h-100">
@@ -29,23 +24,33 @@
                     Организатор: {{ room.host.username }}<br>
                     Участников: {{ room.participants.count }} / {{ room.limit_participants }}
                 </p>
-                {% if user.is_authenticated %}
-                    {% if user in room.participants.all %}
-                        <form method="post" action="{% url 'rooms:leave' room.pk %}">
-                            {% csrf_token %}
-                            <button class="btn btn-danger" type="submit">{% trans "Отключиться" %}</button>
-                            <a href="{% url 'rooms:detail' room.pk %}" class="btn btn-secondary mt-4">{% trans "Назад к комнате" %}</a>
-
-                        </form>
+                <div class="d-flex justify-content-end mt-3 gap-2">
+                    {% if user.is_authenticated %}
+                        {% if user in room.participants.all %}
+                            <form method="post" action="{% url 'rooms:leave' room.pk %}">
+                                {% csrf_token %}
+                                <button class="btn btn-danger" type="submit">
+                                    {% trans "Отключиться" %}
+                                </button>
+                            </form>
+                            <a href="{% url 'rooms:detail' room.pk %}" class="btn btn-secondary">
+                                {% trans "Назад к комнате" %}
+                            </a>
+                        {% else %}
+                            <form method="post" action="{% url 'rooms:join' room.pk %}">
+                                {% csrf_token %}
+                                <button class="btn btn-success" type="submit">
+                                    {% trans "Подключиться" %}
+                                </button>
+                            </form>
+                        {% endif %}
                     {% else %}
-                        <form method="post" action="{% url 'rooms:join' room.pk %}">
-                            {% csrf_token %}
-                            <button class="btn btn-success" type="submit">{% trans "Подключиться" %}</button>
-                        </form>
+                        <p class="mb-0">
+                            <a href="{% url 'login' %}">{% trans "Войдите" %}</a>
+                            {% trans ", чтобы подключиться к комнате." %}
+                        </p>
                     {% endif %}
-                {% else %}
-                    <p><a href="{% url 'login' %}">{% trans "Войдите" %}</a>{% trans ", чтобы подключиться к комнате." %}</p>
-                {% endif %}
+                </div>
             </div>
         </div>
     </div>

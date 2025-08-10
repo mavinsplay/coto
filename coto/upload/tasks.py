@@ -53,38 +53,44 @@ def generate_hls(video_id):
         manifest_path = out_dir / "master.m3u8"
         segment_pattern = out_dir / "seg%d.ts"
 
+        vf_filter = (
+            "scale='if(gt(a,1920/1080),1920,trunc(iw/2)*2)':'if(gt(a,1920/1080)\
+                ,trunc(1080/2)*2,trunc(ih/2)*2)',"
+            "pad=ceil(iw/2)*2:ceil(ih/2)*2:(ow-iw)/2:(oh-ih)/2,fps=60"
+        )
+
         cmd = [
             "ffmpeg",
             "-i",
-            raw_path,
+            str(raw_path),
             "-vf",
-            "scale=w=1920:h=1080:force_original_aspect_ratio=decrease,fps=60",
+            vf_filter,
             "-c:v",
             "libx264",
             "-preset",
-            "slow",  # Лучше качество (медленнее кодирование)
+            "slow",
             "-crf",
-            "18",  # Лучше визуальное качество (меньше — выше качество)
+            "18",
             "-maxrate",
-            "12M",  # Выше пик битрейта
+            "12M",
             "-bufsize",
-            "20M",  # Соответствует maxrate
+            "20M",
             "-c:a",
             "aac",
             "-b:a",
-            "192k",  # Лучше звук
+            "192k",
             "-ar",
-            "48000",  # Частота дискретизации
+            "48000",
             "-ac",
-            "2",  # Стерео
+            "2",
             "-flags",
             "+global_header",
             "-hls_time",
-            "6",  # Частые сегменты для плавности (меньше задержка)
+            "6",
             "-hls_list_size",
             "0",
             "-hls_segment_filename",
-            segment_pattern,
+            str(segment_pattern),
             str(manifest_path),
         ]
 

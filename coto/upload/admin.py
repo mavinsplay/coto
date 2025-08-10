@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from upload.models import Video
+from upload.models import Playlist, PlaylistItem, Video
 
 
 __all__ = ["VideoAdmin"]
@@ -15,14 +15,12 @@ class VideoAdmin(admin.ModelAdmin):
         "get_thumbnail",
         "uploaded_by",
         "created_at",
-        "views",
         "get_human_duration",
         "get_human_filesize",
     )
     list_filter = ("uploaded_by", "created_at")
     search_fields = ("title", "description", "uploaded_by__username")
     readonly_fields = (
-        "views",
         "get_video_preview",
         "get_thumbnail",
         "get_human_duration",
@@ -45,7 +43,7 @@ class VideoAdmin(admin.ModelAdmin):
         ),
         (
             _("Статистика"),
-            {"fields": ("views", "get_human_duration", "created_at")},
+            {"fields": ("get_human_duration", "created_at")},
         ),
     )
 
@@ -125,3 +123,40 @@ class VideoAdmin(admin.ModelAdmin):
         return f"{size:.1f} ПБ"
 
     get_human_filesize.short_description = _("Размер файла")
+
+
+class PlaylistItemInline(admin.TabularInline):
+    model = PlaylistItem
+    extra = 1
+    fields = ("season_number", "episode_number", "video", "order")
+    ordering = ("season_number", "episode_number", "order")
+    autocomplete_fields = ["video"]
+    show_change_link = True
+
+
+@admin.register(Playlist)
+class PlaylistAdmin(admin.ModelAdmin):
+    list_display = ("title", "created_by", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("title", "description", "created_by__username")
+    inlines = [PlaylistItemInline]
+    autocomplete_fields = ["created_by"]
+    date_hierarchy = "created_at"
+
+
+@admin.register(PlaylistItem)
+class PlaylistItemAdmin(admin.ModelAdmin):
+    list_display = (
+        "playlist",
+        "season_number",
+        "episode_number",
+        "video",
+        "order",
+    )
+    list_filter = ("playlist", "season_number")
+    search_fields = (
+        "playlist__title",
+        "video__title",
+    )
+    ordering = ("playlist", "season_number", "episode_number", "order")
+    autocomplete_fields = ["playlist", "video"]

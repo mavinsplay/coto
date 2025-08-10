@@ -1,21 +1,33 @@
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
 
-from upload.models import Video
+from upload.models import Playlist, Video
 
 __all__ = ["WatchParty"]
 
 
 class WatchParty(models.Model):
     name = models.CharField(_("Название комнаты"), max_length=200)
+
     video = models.ForeignKey(
         Video,
         on_delete=models.CASCADE,
         related_name="watch_parties",
         verbose_name=_("Видео"),
+        blank=True,
+        null=True,
     )
+    playlist = models.ForeignKey(
+        Playlist,
+        on_delete=models.CASCADE,
+        related_name="watch_parties",
+        verbose_name=_("Плейлист"),
+        blank=True,
+        null=True,
+    )
+
     room_image = models.ImageField(
         verbose_name=_("Изображение комнаты"),
         upload_to="thumbnails/rooms_images/%Y/%m/%d/",
@@ -36,10 +48,11 @@ class WatchParty(models.Model):
     )
     limit_participants = models.IntegerField(
         default=10,
-        verbose_name=_("Участники"),
+        verbose_name=_("Лимит участников"),
     )
     is_private = models.BooleanField(
         verbose_name=_("Приватная"),
+        default=False,
     )
     current_time = models.FloatField(_("Текущее время видео"), default=0.0)
     created_at = models.DateTimeField(_("Создано"), auto_now_add=True)
@@ -51,6 +64,28 @@ class WatchParty(models.Model):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        """Проверяем, что выбрано либо видео, либо плейлист, но не оба."""
+        from django.core.exceptions import ValidationError
+
+        if not self.video and not self.playlist:
+            raise ValidationError(_("Выберите либо видео, либо плейлист."))
+
+        if self.video and self.playlist:
+            raise ValidationError(
+                _("Нельзя выбрать и видео, и плейлист одновременно."),
+            )
+
+    @property
+    def content_type(self):
+        if self.video:
+            return "video"
+
+        if self.playlist:
+            return "playlist"
+
+        return None
 
 
 class ChatMessage(models.Model):

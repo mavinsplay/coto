@@ -57,6 +57,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 li.textContent = user;
                 participantsList.appendChild(li);
             });
+        
+            const countElement = document.getElementById("participants-count");
+            if (countElement && typeof data.count !== "undefined") {
+                countElement.textContent = data.count;
+            }
         }
 
         if (data.type === "history") {

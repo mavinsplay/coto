@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     # Third-party apps
     "daphne",
     "channels",
+    "sorl.thumbnail",
     # Django apps
     "django.contrib.admin",
     "django.contrib.auth",
@@ -107,7 +108,7 @@ SELECTED_DATABASE = os.getenv(
 )
 
 if SELECTED_DATABASE == "postgresql":
-    DB_NAME = os.getenv("DJANGO_POSTGRESQL_NAME", "lambda_search")
+    DB_NAME = os.getenv("DJANGO_POSTGRESQL_NAME", "coto_db")
     DB_USER = os.getenv("DJANGO_POSTGRESQL_USER", "postgres")
     DB_PASSWORD = os.getenv("DJANGO_POSTGRESQL_PASSWORD", "root")
     DB_HOST = os.getenv("DJANGO_POSTGRESQL_HOST", "localhost")

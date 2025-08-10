@@ -104,7 +104,8 @@ class LeaveRoomView(LoginRequiredMixin, View):
                 "text": json.dumps(
                     {
                         "type": "message",
-                        "message": f"{request.user.username} покинул комнату",
+                        "message": f"{request.user.username}\
+                            покинул(а) комнату",
                         "system": True,
                         "username": request.user.username,
                     },

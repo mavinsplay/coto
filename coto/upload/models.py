@@ -32,7 +32,6 @@ class Video(models.Model):
     )
     created_at = models.DateTimeField(_("Дата загрузки"), default=timezone.now)
     duration = models.DurationField(_("Длительность"), null=True, blank=True)
-    views = models.PositiveIntegerField(_("Просмотры"), default=0)
     hls_manifest = models.FileField(
         upload_to="videos/hls_manifests/",
         blank=True,
@@ -105,3 +104,71 @@ class Video(models.Model):
                 )
 
         super().delete(*args, **kwargs)
+
+
+class Playlist(models.Model):
+    """
+    Плейлист (сериал, шоу, сборник видео).
+    Может содержать сезоны и серии.
+    """
+
+    title = models.CharField(_("Название"), max_length=255)
+    description = models.TextField(_("Описание"), blank=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="created_playlists",
+        verbose_name=_("Создал"),
+    )
+    cover_image = models.ImageField(
+        _("Обложка"),
+        upload_to="playlists/covers/%Y/%m/%d/",
+        blank=True,
+        null=True,
+    )
+    created_at = models.DateTimeField(_("Дата создания"), default=timezone.now)
+
+    class Meta:
+        verbose_name = _("Плейлист")
+        verbose_name_plural = _("Плейлисты")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
+
+
+class PlaylistItem(models.Model):
+    """
+    Связь между плейлистом и видео.
+    Можно указывать сезон, номер серии, порядок.
+    """
+
+    playlist = models.ForeignKey(
+        Playlist,
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name=_("Плейлист"),
+    )
+    video = models.ForeignKey(
+        Video,
+        on_delete=models.CASCADE,
+        related_name="in_playlists",
+        verbose_name=_("Видео"),
+    )
+    season_number = models.PositiveIntegerField(_("Сезон"), default=1)
+    episode_number = models.PositiveIntegerField(_("Серия"), default=1)
+    order = models.PositiveIntegerField(
+        _("Порядок"),
+        default=0,
+        help_text=_("Порядок отображения в плейлисте"),
+    )
+
+    class Meta:
+        verbose_name = _("Эпизод плейлиста")
+        verbose_name_plural = _("Эпизоды плейлиста")
+        ordering = ["season_number", "episode_number", "order"]
+        unique_together = ("playlist", "season_number", "episode_number")
+
+    def __str__(self):
+        return f"{self.playlist.title} — \
+            S{self.season_number:02d}E{self.episode_number:02d}"
