@@ -1,0 +1,134 @@
+name: CI/CD Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  flake8-check:
+    name: Flake8 Lint Check
+    runs-on: ubuntu-latest
+    container:
+      image: registry.gitlab.com/pipeline-components/flake8:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Run Flake8
+        run: flake8 --verbose .
+
+  black-check:
+    name: Black Code Format Check
+    runs-on: ubuntu-latest
+    container:
+      image: registry.gitlab.com/pipeline-components/black:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Run Black
+        run: black --check --verbose .
+
+  django-tests:
+    name: Run Django Tests
+    needs: [flake8-check, black-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements/test.txt
+
+      - name: Run Django migrations and tests
+        run: |
+          cd lambda_search
+          python3 manage.py makemigrations
+          python3 manage.py migrate
+          python3 manage.py test
+        env:
+          DJANGO_DATABASE_SELECT: sqlite3
+          DJANGO_ALLOW_CAPTCHA: 0
+      
+
+  docker-build-test:
+    name: Test Docker Build
+    needs: [django-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          DJANGO_DEBUG=True
+          DJANGO_SECRET_KEY=$(openssl rand -base64 32)
+          DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
+          DJANGO_SITE_URL=127.0.0.1:8000
+          DJANGO_ENCRYPTION_KEY=$(openssl rand -base64 32 | cut -c1-32)
+
+          LAMBDA_SUPERUSER_NAME=admin
+          LAMBDA_SUPERUSER_EMAIL=lambda.search.helper@gmail.com
+          LAMBDA_SUPERUSER_PASSWORD=admin
+
+          DJANGO_DEFAULT_USER_IS_ACTIVE=False
+          DJANGO_MAX_AUTH_ATTEMPTS=5
+
+          DJANGO_DATABASE_SELECT=postgresql
+
+          DJANGO_POSTGRESQL_NAME=coto
+          DJANGO_POSTGRESQL_USER=coto_user
+          DJANGO_POSTGRESQL_PASSWORD=strong_postgres_pass
+          DJANGO_POSTGRESQL_HOST=postgres
+          DJANGO_POSTGRESQL_PORT=5432
+
+          POSTGRES_DB=coto
+          POSTGRES_USER=coto_user
+          POSTGRES_PASSWORD=strong_postgres_pass
+          DATABASE_HOST=postgres
+          DATABASE_PORT=5432
+
+          DJANGO_ALLOW_CAPTCHA=0
+          DJANGO_CAPTCHA_SITE_KEY=
+          DJANGO_CAPTCHA_SECRET_KEY=
+
+          EMAIL_HOST=smtp.gmail.com
+          DJANGO_MAIL=testmail@gmail.com
+          DJANGO_EMAIL_HOST_PASSWORD=test
+
+          LAMBDA_CERTBOT_DEBUG=1
+          LAMBDA_CERTBOT_STAGING=1
+          LAMBDA_CERTBOT_EMAIL=testmail@gmail.com
+
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          REDIS_DB=0
+          REDIS_PASSWORD=strong_redis_pass
+          EOF
+
+      - name: Test Docker Compose Build
+        run: docker compose --profile prod build
+
+  prod-deploy:
+    name: Deploy project to server
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [flake8-check, black-check, django-tests, docker-build-test]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_IP }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd lambda-search/
+          docker-compose down
+          git reset --hard origin/main  
+          git pull origin main
+          docker-compose --profile prod up --build -d

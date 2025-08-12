@@ -4,8 +4,6 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.cache import cache
 
-from rooms.models import ChatMessage, WatchParty
-from upload.models import Video
 
 __all__ = ("WatchPartySyncConsumer",)
 
@@ -205,6 +203,8 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
     # ========== Helpers: DB / cache ==========
     @database_sync_to_async
     def get_participants(self):
+        from rooms.models import WatchParty
+
         try:
             party = WatchParty.objects.get(id=self.party_id)
             return list(party.participants.values_list("username", flat=True))
@@ -213,6 +213,8 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_last_messages(self, limit=50):
+        from rooms.models import ChatMessage
+
         messages = ChatMessage.objects.filter(room_id=self.party_id).order_by(
             "-created_at",
         )[:limit]
@@ -227,6 +229,8 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def save_message(self, content, username=None, is_system=False):
+        from rooms.models import ChatMessage, WatchParty
+
         user = None
         if username and not is_system and self.user.is_authenticated:
             user = self.user
@@ -241,6 +245,9 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def save_watchparty_video(self, video_id):
+        from rooms.models import WatchParty
+        from upload.models import Video
+
         try:
             room = WatchParty.objects.get(id=self.party_id)
             v = Video.objects.get(id=video_id)
@@ -252,6 +259,8 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_room_once(self):
+        from rooms.models import WatchParty
+
         try:
             return WatchParty.objects.select_related("video").get(
                 id=self.party_id,
@@ -290,6 +299,8 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_watchparty_state(self):
+        from rooms.models import WatchParty
+
         key = f"watchparty_state_{self.party_id}"
         st = cache.get(key)
         if st:

@@ -1,5 +1,4 @@
 argparse==1.4.0
-asgiref==3.8.1
 Django==4.2.16
 Pillow==11.3.0
 sorl-thumbnail==12.11.0

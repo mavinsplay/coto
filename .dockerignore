@@ -1,0 +1,11 @@
+**/*.sqlite3
+**/*.pyc
+**/__pycache__/
+.vscode/
+.idea/
+node_modules/
+dist/
+build/
+logs/
+media/
+static/
