@@ -43,7 +43,7 @@ jobs:
 
       - name: Run Django migrations and tests
         run: |
-          cd lambda_search
+          cd coto
           python3 manage.py makemigrations
           python3 manage.py migrate
           python3 manage.py test
@@ -127,7 +127,7 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd lambda-search/
+          cd coto/
           docker-compose down
           git reset --hard origin/main  
           git pull origin main
