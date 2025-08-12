@@ -49,7 +49,8 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
             {"type": "participants_update", "participants": participants},
         )
         await self.channel_layer.group_discard(
-            self.group_name, self.channel_name,
+            self.group_name,
+            self.channel_name,
         )
 
     async def receive(self, text_data):
@@ -70,7 +71,9 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
                     else "Гость"
                 )
                 await self.save_message(
-                    message, username, data.get("system", False),
+                    message,
+                    username,
+                    data.get("system", False),
                 )
                 await self.channel_layer.group_send(
                     self.group_name,
@@ -230,7 +233,10 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
         room = WatchParty.objects.get(id=self.party_id)
         ChatMessage.objects.create(
-            room=room, user=user, content=content, is_system=is_system,
+            room=room,
+            user=user,
+            content=content,
+            is_system=is_system,
         )
 
     @database_sync_to_async
@@ -256,7 +262,12 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
     # ---- cached state helpers (no DB migrations) ----
     @database_sync_to_async
     def set_watchparty_state(
-        self, time, ts, is_playing, video_id=None, hls_url=None,
+        self,
+        time,
+        ts,
+        is_playing,
+        video_id=None,
+        hls_url=None,
     ):
         key = f"watchparty_state_{self.party_id}"
         state = {
@@ -271,7 +282,9 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
             "hls_url": str(hls_url) if hls_url else None,
         }
         cache.set(
-            key, state, None,
+            key,
+            state,
+            None,
         )  # timeout=None -> persist until invalidated
         return True
 
@@ -301,5 +314,6 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
     async def sync_broadcast(self, text_data):
         await self.channel_layer.group_send(
-            self.group_name, {"type": "broadcast", "text": text_data},
+            self.group_name,
+            {"type": "broadcast", "text": text_data},
         )

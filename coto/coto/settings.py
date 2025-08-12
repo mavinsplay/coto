@@ -62,7 +62,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Local apps
-    "catalog.apps.CatalogConfig",
     "homepage.apps.HomepageConfig",
     "users.apps.UsersConfig",
     "upload.apps.UploadConfig",
