@@ -19,8 +19,8 @@ document.addEventListener("DOMContentLoaded", function () {
         div.classList.add("chat-message");
 
         const timeText = timestamp
-            ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            : formatTime(new Date());
+        ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : "";
 
         if (system) {
             div.classList.add("system");

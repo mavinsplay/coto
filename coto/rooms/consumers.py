@@ -223,6 +223,7 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
                 "username": m.user.username if m.user else "Система",
                 "message": m.content,
                 "system": m.is_system,
+                "timestamp": m.created_at.isoformat(),
             }
             for m in reversed(messages)
         ]
