@@ -3,6 +3,7 @@ import logging
 import os
 from pathlib import Path
 import subprocess
+import time
 
 from celery import shared_task
 from django.conf import settings
@@ -41,14 +42,92 @@ def extract_video_metadata(video_id):
         )
 
 
+def try_update_video_progress(
+    video,
+    progress=None,
+    status=None,
+    log_line=None,
+    force=False,
+    delta_percent=1,
+    min_interval_sec=2,
+):
+    """
+    Обновление прогресса в модели Video с rate-limit'ом.
+    """
+    if not hasattr(video, "_last_progress_update"):
+        video._last_progress_update = {
+            "time": 0,
+            "progress": video.hls_progress,
+        }
+
+    last = video._last_progress_update
+
+    should = False
+    if force:
+        should = True
+    else:
+        if (
+            progress is not None
+            and abs((progress or 0) - (last["progress"] or 0)) >= delta_percent
+        ):
+            should = True
+        elif (time.time() - last["time"]) >= min_interval_sec:
+            should = True
+
+    if not should:
+        if log_line:
+            video.hls_log = (video.hls_log + "\n" + log_line)[-8000:]
+
+        return
+
+    if progress is not None:
+        video.hls_progress = max(0, min(100, int(progress)))
+        last["progress"] = video.hls_progress
+
+    if status is not None:
+        video.hls_status = status
+
+    if log_line:
+        video.hls_log = (video.hls_log + "\n" + log_line)[-8000:]
+
+    try:
+        video.save(update_fields=["hls_progress", "hls_status", "hls_log"])
+        video._last_progress_update["time"] = time.time()
+    except Exception:
+        logger.exception("Could not save video progress")
+
+
+def _ffprobe_duration(path):
+    try:
+        res = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                str(path),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            text=True,
+        )
+        out = (res.stdout or "").strip()
+        if out:
+            return float(out)
+    except Exception:
+        logger.exception("ffprobe fallback failed for %s", path)
+
+    return 0.0
+
+
 @shared_task(bind=True)
 def generate_hls(self, video_id):
     """
-    Генерация HLS с автоподбором параметров.
-    Сохраняет 60 fps; старается минимизировать пиковую память за счет:
-      - использования copy-пути если возможно
-      - адаптации preset/threads/rc_lookahead по доступной памяти
-      - двухшаговой обработки: транскод -> сегментация (копирование)
+    Генерация HLS с автоподбором параметров и обновлением прогресса.
     """
     try:
         from upload.models import Video
@@ -56,20 +135,35 @@ def generate_hls(self, video_id):
         video = Video.objects.get(pk=video_id)
         raw_path = Path(video.file.path)
 
+        # Инициализация состояния
+        video.hls_progress = 0
+        video.hls_status = "pending"
+        video.hls_log = ""
+        video.save(update_fields=["hls_progress", "hls_status", "hls_log"])
+
         out_dir = Path(settings.MEDIA_ROOT) / "streams" / str(video.pk)
         out_dir.mkdir(parents=True, exist_ok=True)
 
         manifest_path = out_dir / "master.m3u8"
         segment_pattern = out_dir / "seg%d.ts"
-        ffmpeg_log = out_dir / "ffmpeg.log"
 
-        # --- 1) проба метаданных входа ---
+        # Попытка получить метаданные через ffmpeg.probe
         try:
             probe = ffmpeg.probe(str(raw_path))
         except Exception:
             probe = {}
 
-        # Найти видеопоток и аудиопоток
+        try:
+            duration = float(probe.get("format", {}).get("duration") or 0.0)
+        except Exception:
+            duration = 0.0
+
+        # fallback через ffprobe binary если duration == 0
+        if not duration:
+            duration = _ffprobe_duration(raw_path)
+            logger.debug("[HLS Task] ffprobe fallback duration=%s", duration)
+
+        # Найти потоки
         v_stream = None
         a_stream = None
         for s in probe.get("streams", []):
@@ -98,6 +192,136 @@ def generate_hls(self, video_id):
 
         input_fps = parse_fps(v_stream) if v_stream else 0.0
 
+        def run_ffmpeg_with_progress(cmd, phase_label, duration_seconds):
+            """
+            Запускает ffmpeg с -progress pipe:1 и парсит ключи вида key=value.
+            duration_seconds может быть 0.0 (неизвестно).
+            """
+            logger.info(
+                "[HLS Task] Phase %s start; duration=%s",
+                phase_label,
+                duration_seconds,
+            )
+            video.hls_status = phase_label
+            try_update_video_progress(
+                video,
+                status=video.hls_status,
+                force=True,
+            )
+
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                bufsize=1,
+                universal_newlines=False,
+            )
+
+            current_out_time = None
+            try:
+                while True:
+                    chunk = proc.stdout.readline()
+                    if not chunk:
+                        break
+
+                    # безопасное декодирование
+                    try:
+                        decoded = chunk.decode("utf-8", errors="replace")
+                    except Exception:
+                        decoded = chunk.decode("latin1", errors="replace")
+
+                    # один chunk может содержать много строк; разобьём
+                    for raw_line in decoded.replace("\r", "\n").splitlines():
+                        line = raw_line.strip()
+                        if not line:
+                            continue
+
+                        # сохраняем хвост лога (rate-limited внутри функции)
+                        try_update_video_progress(video, log_line=line)
+
+                        # разбор key=value
+                        if "=" in line:
+                            key, value = line.split("=", 1)
+                            key = key.strip()
+                            value = value.strip()
+                        else:
+                            key = line
+                            value = ""
+
+                        if key == "out_time_ms":
+                            try:
+                                out_ms = int(value)
+                                current_out_time = out_ms / 1000.0
+                            except Exception:
+                                pass
+                        elif key == "out_time":
+                            try:
+                                parts = value.split(":")
+                                secs = float(parts[-1])
+                                mins = int(parts[-2]) if len(parts) >= 2 else 0
+                                hrs = int(parts[-3]) if len(parts) >= 3 else 0
+                                current_out_time = (
+                                    hrs * 3600 + mins * 60 + secs
+                                )
+                            except Exception:
+                                pass
+                        elif key == "time":
+                            try:
+                                parts = value.split(":")
+                                secs = float(parts[-1])
+                                mins = int(parts[-2]) if len(parts) >= 2 else 0
+                                hrs = int(parts[-3]) if len(parts) >= 3 else 0
+                                current_out_time = (
+                                    hrs * 3600 + mins * 60 + secs
+                                )
+                            except Exception:
+                                pass
+                        elif key == "progress":
+                            if value == "end":
+                                try_update_video_progress(
+                                    video,
+                                    progress=100,
+                                    status=video.hls_status,
+                                    log_line=line,
+                                    force=True,
+                                )
+
+                        # вычисляем процент при известной длительности
+                        if duration_seconds and (current_out_time is not None):
+                            try:
+                                percent = int(
+                                    min(
+                                        100.0,
+                                        (current_out_time / duration_seconds)
+                                        * 100.0,
+                                    ),
+                                )
+                            except Exception:
+                                percent = None
+
+                            if percent is not None:
+                                # если первая ненулевая запись — форсим её
+                                force_write = (
+                                    video.hls_progress == 0 and percent > 0
+                                )
+                                try_update_video_progress(
+                                    video,
+                                    progress=percent,
+                                    status=video.hls_status,
+                                    force=force_write,
+                                )
+
+                proc.wait()
+                if proc.returncode != 0:
+                    raise subprocess.CalledProcessError(proc.returncode, cmd)
+            finally:
+                try:
+                    if proc.stdout:
+                        proc.stdout.close()
+                except Exception:
+                    pass
+
+        # --- copy path (если возможно) ---
         if (
             video_codec == "h264"
             and audio_codec in ("aac", "mp4a")
@@ -119,20 +343,32 @@ def generate_hls(self, video_id):
                 "-hls_segment_filename",
                 str(segment_pattern),
                 str(manifest_path),
+                "-progress",
+                "pipe:1",
+                "-nostats",
             ]
-            logger.info(
-                "[HLS Task] Используем путь \
-                copy (вход уже h264/aac 60fps).",
+            run_ffmpeg_with_progress(cmd, "copy", duration)
+
+            rel = manifest_path.relative_to(settings.MEDIA_ROOT)
+            video.hls_manifest.name = str(rel).replace("\\", "/")
+            video.hls_status = "done"
+            try_update_video_progress(
+                video,
+                progress=100,
+                status="done",
+                force=True,
             )
-
-            with ffmpeg_log.open("ab") as logf:
-                subprocess.run(cmd, check=True, stdout=logf, stderr=logf)
-
-            relative_manifest = manifest_path.relative_to(settings.MEDIA_ROOT)
-            video.hls_manifest.name = str(relative_manifest).replace("\\", "/")
-            video.save(update_fields=["hls_manifest"])
+            video.save(
+                update_fields=[
+                    "hls_manifest",
+                    "hls_progress",
+                    "hls_status",
+                    "hls_log",
+                ],
+            )
             return
 
+        # --- autotune ---
         mem_mb = int(psutil.virtual_memory().available / (1024 * 1024))
         cpu_count = os.cpu_count() or 1
 
@@ -157,20 +393,9 @@ def generate_hls(self, video_id):
             rc_lookahead = 20
             crf = 18
 
-        logger.info(
-            "[HLS Task] Autotune: mem_mb=%d cpu=%d preset=%s threads=%d \
-                rc_lookahead=%d crf=%s",
-            mem_mb,
-            cpu_count,
-            preset,
-            threads,
-            rc_lookahead,
-            crf,
-        )
-
         vf_filter = (
-            "scale='if(gt(a,1920/1080),1920,trunc(iw/2)*2)':'if(gt(a,1920/1080)\
-                ,trunc(1080/2)*2,trunc(ih/2)*2)',"
+            "scale='if(gt(a,1920/1080),1920,trunc(iw/2)*2)':"
+            "'if(gt(a,1920/1080),trunc(1080/2)*2,trunc(ih/2)*2)',"
             "pad=ceil(iw/2)*2:ceil(ih/2)*2:(ow-iw)/2:(oh-ih)/2,fps=60"
         )
         tmp_mp4 = out_dir / "transcoded_temp.mp4"
@@ -207,34 +432,34 @@ def generate_hls(self, video_id):
             "-movflags",
             "+faststart",
             str(tmp_mp4),
+            "-progress",
+            "pipe:1",
+            "-nostats",
         ]
 
-        with ffmpeg_log.open("ab") as logf:
-            logger.info("[HLS Task] Запуск транскодинга в %s", str(tmp_mp4))
-            subprocess.run(transcode_cmd, check=True, stdout=logf, stderr=logf)
+        run_ffmpeg_with_progress(transcode_cmd, "transcode", duration)
 
-            seg_cmd = [
-                "ffmpeg",
-                "-y",
-                "-i",
-                str(tmp_mp4),
-                "-c",
-                "copy",
-                "-bsf:v",
-                "h264_mp4toannexb",
-                "-hls_time",
-                "6",
-                "-hls_list_size",
-                "0",
-                "-hls_segment_filename",
-                str(segment_pattern),
-                str(manifest_path),
-            ]
-            logger.info(
-                "[HLS Task] Запуск сегментации (копирование) в %s",
-                str(manifest_path),
-            )
-            subprocess.run(seg_cmd, check=True, stdout=logf, stderr=logf)
+        seg_cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(tmp_mp4),
+            "-c",
+            "copy",
+            "-bsf:v",
+            "h264_mp4toannexb",
+            "-hls_time",
+            "6",
+            "-hls_list_size",
+            "0",
+            "-hls_segment_filename",
+            str(segment_pattern),
+            str(manifest_path),
+            "-progress",
+            "pipe:1",
+            "-nostats",
+        ]
+        run_ffmpeg_with_progress(seg_cmd, "segment", duration)
 
         try:
             if tmp_mp4.exists():
@@ -242,21 +467,53 @@ def generate_hls(self, video_id):
         except Exception:
             logger.exception("Не удалось удалить временный файл %s", tmp_mp4)
 
-        relative_manifest = manifest_path.relative_to(settings.MEDIA_ROOT)
-        video.hls_manifest.name = str(relative_manifest).replace("\\", "/")
-        video.save(update_fields=["hls_manifest"])
+        rel = manifest_path.relative_to(settings.MEDIA_ROOT)
+        video.hls_manifest.name = str(rel).replace("\\", "/")
+        video.hls_status = "done"
+        try_update_video_progress(
+            video,
+            progress=100,
+            status="done",
+            force=True,
+        )
+        video.save(
+            update_fields=[
+                "hls_manifest",
+                "hls_progress",
+                "hls_status",
+                "hls_log",
+            ],
+        )
 
     except subprocess.CalledProcessError as cpe:
         logger.error(
-            "[HLS Task] ffmpeg завершился с ошибкой: %s",
+            "[HLS Task] ffmpeg exited with error: %s",
             cpe,
             exc_info=True,
         )
+        try:
+            video.hls_status = "error"
+            try_update_video_progress(
+                video,
+                status="error",
+                log_line=str(cpe),
+                force=True,
+            )
+        except Exception:
+            pass
+
         raise
     except Exception as e:
-        logger.error(
-            "[HLS Task] Ошибка",
-            e,
-            exc_info=True,
-        )
+        logger.exception("[HLS Task] Ошибка: %s", e)
+        try:
+            video.hls_status = "error"
+            try_update_video_progress(
+                video,
+                status="error",
+                log_line=str(e),
+                force=True,
+            )
+        except Exception:
+            pass
+
         raise

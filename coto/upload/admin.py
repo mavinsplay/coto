@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.http import JsonResponse
+from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
@@ -16,7 +18,7 @@ class VideoAdmin(admin.ModelAdmin):
         "uploaded_by",
         "created_at",
         "get_human_duration",
-        "get_human_filesize",
+        "get_hls_progress",
     )
     list_filter = ("uploaded_by", "created_at")
     search_fields = ("title", "description", "uploaded_by__username")
@@ -24,6 +26,9 @@ class VideoAdmin(admin.ModelAdmin):
         "get_video_preview",
         "get_thumbnail",
         "get_human_duration",
+        "get_hls_progress_field",
+        "get_hls_status_field",
+        "get_human_filesize_field",
     )
     fieldsets = (
         (
@@ -43,9 +48,147 @@ class VideoAdmin(admin.ModelAdmin):
         ),
         (
             _("Статистика"),
-            {"fields": ("get_human_duration", "created_at")},
+            {
+                "fields": (
+                    "get_human_duration",
+                    "get_human_filesize_field",
+                    "created_at",
+                    "get_hls_progress_field",
+                    "get_hls_status_field",
+                ),
+            },
         ),
     )
+
+    class Media:
+        js = ("admin/js/hls_progress.js",)
+        css = {
+            "all": ("admin/css/hls_progress.css",),
+        }
+
+    def get_hls_progress(self, obj):
+        # мини-полоска в списке
+        return format_html(
+            '<div class="hls-mini-bar" data-video-id="{}">'
+            '  <div class="hls-mini-fill" style="width: {}%;">{}</div>'
+            '  <div class="hls-mini-status">{}</div>'
+            '  <div class="hls-mini-filesize">{}</div>'
+            "</div>",
+            obj.pk,
+            obj.hls_progress or 0,
+            f"{obj.hls_progress or 0}%",
+            obj.hls_status or "—",
+            self._get_human_filesize_value(obj),
+        )
+
+    get_hls_progress.short_description = "HLS"
+
+    def _get_human_filesize_value(self, obj):
+        """Внутренний метод для получения размера файла в читаемом формате"""
+        size = obj.file_size
+        if size is None:
+            return _("неизвестно")
+
+        units = ["Б", "КБ", "МБ", "ГБ", "ТБ"]
+        for unit in units:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+
+            size /= 1024.0
+
+        return f"{size:.1f} ПБ"
+
+    # полноразмерное поле на форме для прогресса
+    def get_hls_progress_field(self, obj):
+        if not obj.pk:
+            return "No HLS info yet."
+        # Блок будет обновляться JS через polling
+        return format_html(
+            """
+            <div id="hls-progress-root" data-video-id="{vid}">
+              <div class="hls-card">
+                <div class="hls-header">
+                  <strong>HLS processing</strong>
+                  <span id="hls-status">{status}</span>
+                </div>
+                <div class="hls-bar-outer">
+                  <div id="hls-bar" class="hls-bar-fill"\
+                      style="width:{percent}%">
+                    <span id="hls-percent-text">{percent}%</span>
+                  </div>
+                </div>
+                <div class="hls-log" id="hls-log">{log}</div>
+              </div>
+            </div>
+            """,
+            vid=obj.pk,
+            percent=obj.hls_progress or 0,
+            status=obj.hls_status or "—",
+            log=(obj.hls_log or "").replace("\n", "<br/>")[:2000],
+        )
+
+    get_hls_progress_field.short_description = "HLS progress"
+
+    # отдельное поле для статуса HLS
+    def get_hls_status_field(self, obj):
+        if not obj.pk:
+            return "—"
+
+        return format_html(
+            '<div id="hls-status-field" data-video-id="{}"\
+                class="hls-status-container">'
+            '  <span class="hls-status-badge hls-status-{}">{}</span>'
+            "</div>",
+            obj.pk,
+            (obj.hls_status or "unknown").lower().replace(" ", "-"),
+            obj.hls_status or "—",
+        )
+
+    get_hls_status_field.short_description = "HLS Status"
+
+    # отдельное поле для размера файла
+    def get_human_filesize_field(self, obj):
+        if not obj.pk:
+            return "—"
+
+        return format_html(
+            '<div id="hls-filesize-field" data-video-id="{}"\
+                class="hls-filesize-container">'
+            '  <span class="hls-filesize-value">{}</span>'
+            "</div>",
+            obj.pk,
+            self._get_human_filesize_value(obj),
+        )
+
+    get_human_filesize_field.short_description = "Размер файла"
+
+    # добавим view для ajax polling
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "<int:object_id>/hls_progress/",
+                self.admin_site.admin_view(self.hls_progress_view),
+                name="video_hls_progress",
+            ),
+        ]
+        return custom + urls
+
+    def hls_progress_view(self, request, object_id, *args, **kwargs):
+        try:
+            obj = Video.objects.get(pk=object_id)
+        except Video.DoesNotExist:
+            return JsonResponse({"error": "Not found"}, status=404)
+
+        # You may restrict to GET only
+        data = {
+            "progress": obj.hls_progress,
+            "status": obj.hls_status,
+            "log_tail": (obj.hls_log or "")[-2000:],
+            "manifest": obj.hls_manifest.url if obj.hls_manifest else None,
+            "filesize": self._get_human_filesize_value(obj),
+        }
+        return JsonResponse(data)
 
     def get_thumbnail(self, obj):
         if obj.thumbnail:
@@ -109,18 +252,7 @@ class VideoAdmin(admin.ModelAdmin):
     get_human_duration.short_description = _("Длительность")
 
     def get_human_filesize(self, obj):
-        size = obj.file_size
-        if size is None:
-            return _("неизвестно")
-
-        units = ["Б", "КБ", "МБ", "ГБ", "ТБ"]
-        for unit in units:
-            if size < 1024.0:
-                return f"{size:.1f} {unit}"
-
-            size /= 1024.0
-
-        return f"{size:.1f} ПБ"
+        return self._get_human_filesize_value(obj)
 
     get_human_filesize.short_description = _("Размер файла")
 

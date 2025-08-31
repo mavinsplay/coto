@@ -38,6 +38,13 @@ class Video(models.Model):
         null=True,
         help_text="Путь до файла master.m3u8",
     )
+    hls_progress = models.PositiveSmallIntegerField(default=0)
+    hls_status = models.CharField(
+        max_length=32,
+        blank=True,
+        default="awaiting processing",
+    )
+    hls_log = models.TextField(blank=True, default="")
     file_size = models.BigIntegerField(
         _("Размер файла (в байтах)"),
         null=True,
