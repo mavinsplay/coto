@@ -7,7 +7,7 @@
     padding: 15px;
     background: #f9f9f900;
     margin: 10px 0;
-    max-width: 70%;
+    max-width: 80%;
 }
 
 .hls-header {
@@ -51,7 +51,6 @@
     font-size: 11px;
     max-height: 150px;
     overflow-y: auto;
-    white-space: pre-wrap;
 }
 
 /* Мини-полоски в списке */
@@ -89,10 +88,9 @@
     font-size: 11px;
     color: #666;
     min-width: 60px;
-    z-index: 1;
-    margin-left: 10px;
-    margin-right: 15px;
-    text-align: left;
+    z-index: 2;
+    margin-left: 50%;
+    text-align: right;
 }
 
 .hls-mini-filesize {

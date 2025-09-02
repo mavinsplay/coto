@@ -124,7 +124,7 @@ class VideoAdmin(admin.ModelAdmin):
             vid=obj.pk,
             percent=obj.hls_progress or 0,
             status=obj.hls_status or "—",
-            log=(obj.hls_log or "").replace("\n", "<br/>")[:2000],
+            log=(obj.hls_log or "")[:2000],
         )
 
     get_hls_progress_field.short_description = "HLS progress"
