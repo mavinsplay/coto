@@ -187,4 +187,12 @@
     .hls-card {
         padding: 10px;
     }
+    .hls-mini-status {
+        font-size: 0px;
+        color: #666;
+        min-width: 60px;
+        z-index: 2;
+        margin-left: 50%;
+        text-align: right;
+    }
 }

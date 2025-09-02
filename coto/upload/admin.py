@@ -23,7 +23,6 @@ class VideoAdmin(admin.ModelAdmin):
     list_filter = ("uploaded_by", "created_at")
     search_fields = ("title", "description", "uploaded_by__username")
     readonly_fields = (
-        "get_video_preview",
         "get_thumbnail",
         "get_human_duration",
         "get_hls_progress_field",
@@ -40,7 +39,6 @@ class VideoAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "file",
-                    "get_video_preview",
                     "thumbnail",
                     "get_thumbnail",
                 ),
@@ -61,9 +59,13 @@ class VideoAdmin(admin.ModelAdmin):
     )
 
     class Media:
-        js = ("admin/js/hls_progress.js",)
+        js = (
+            "admin/js/hls_progress.js",
+        )
         css = {
-            "all": ("admin/css/hls_progress.css",),
+            "all": (
+                "admin/css/hls_progress.css",
+            ),
         }
 
     def get_hls_progress(self, obj):
@@ -200,22 +202,6 @@ class VideoAdmin(admin.ModelAdmin):
         return _("Нет превью")
 
     get_thumbnail.short_description = _("предпросмотр превью")
-
-    def get_video_preview(self, obj):
-        if obj.file:
-            return format_html(
-                """
-                <video width="320" height="240" controls>
-                    <source src="{}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-                """,
-                obj.file.url,
-            )
-
-        return _("Видео не загружено")
-
-    get_video_preview.short_description = _("Предпросмотр видео")
 
     def get_human_duration(self, obj):
         if not obj.duration:
