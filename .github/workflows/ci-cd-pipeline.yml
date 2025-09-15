@@ -69,9 +69,9 @@ jobs:
           DJANGO_SITE_URL=127.0.0.1:8000
           DJANGO_ENCRYPTION_KEY=$(openssl rand -base64 32 | cut -c1-32)
 
-          LAMBDA_SUPERUSER_NAME=admin
-          LAMBDA_SUPERUSER_EMAIL=lambda.search.helper@gmail.com
-          LAMBDA_SUPERUSER_PASSWORD=admin
+          SUPERUSER_NAME=admin
+          SUPERUSER_EMAIL=lambda.search.helper@gmail.com
+          SUPERUSER_PASSWORD=admin
 
           DJANGO_DEFAULT_USER_IS_ACTIVE=False
           DJANGO_MAX_AUTH_ATTEMPTS=5
@@ -98,9 +98,11 @@ jobs:
           DJANGO_MAIL=testmail@gmail.com
           DJANGO_EMAIL_HOST_PASSWORD=test
 
-          LAMBDA_CERTBOT_DEBUG=1
-          LAMBDA_CERTBOT_STAGING=1
-          LAMBDA_CERTBOT_EMAIL=testmail@gmail.com
+          CERTBOT_EMAIL=lambda.search.helper@gmail.com
+          CERTBOT_STAGING=0
+          CERTBOT_DEBUG=0
+          DOMAIN_LIST=cotoo.ru www.cotoo.ru
+          RENEWAL_INTERVAL=8d
 
           REDIS_HOST=redis
           REDIS_PORT=6379
