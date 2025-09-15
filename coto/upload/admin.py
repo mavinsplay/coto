@@ -59,13 +59,9 @@ class VideoAdmin(admin.ModelAdmin):
     )
 
     class Media:
-        js = (
-            "admin/js/hls_progress.js",
-        )
+        js = ("admin/js/hls_progress.js",)
         css = {
-            "all": (
-                "admin/css/hls_progress.css",
-            ),
+            "all": ("admin/css/hls_progress.css",),
         }
 
     def get_hls_progress(self, obj):
