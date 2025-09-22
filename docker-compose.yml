@@ -118,6 +118,7 @@ services:
       - ./static_dev:/coto/static:ro
       - ./media:/coto/media:rw
       - ./for_docker/nginx-body:/var/lib/nginx/body:rw
+      - ./for_docker/letsencrypt_webroot:/var/www/letsencrypt:rw
       - ./logs/nginx:/var/log/nginx
       - ./for_docker/nginx_certificates:/etc/letsencrypt
     depends_on:

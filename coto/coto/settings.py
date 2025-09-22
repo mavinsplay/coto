@@ -300,6 +300,10 @@ CHANNEL_LAYERS = {
     },
 }
 
+FILE_UPLOAD_MAX_MEMORY_SIZE = 0
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
 
 if DEBUG:
     MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
