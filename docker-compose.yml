@@ -110,6 +110,12 @@ services:
       - NGINX_MAX_BODY_SIZE=50G
       - STAGING=${CERTBOT_STAGING}
       - CERTBOT_EMAIL=${CERTBOT_EMAIL}
+      - RENEWAL_INTERVAL=${RENEWAL_INTERVAL}
+      - DOMAIN_LIST=${DOMAIN_LIST}
+      - USE_ECDSA=1
+      - DHPARAM_SIZE=2048
+      - RSA_KEY_SIZE=2048
+      - ELLIPTIC_CURVE=secp384r1
     ports:
       - "80:80"
       - "443:443"
@@ -120,7 +126,7 @@ services:
       - ./for_docker/nginx-body:/var/lib/nginx/body:rw
       - ./for_docker/letsencrypt_webroot:/var/www/letsencrypt:rw
       - ./logs/nginx:/var/log/nginx
-      - ./for_docker/nginx_certificates:/etc/letsencrypt
+      - nginx_secrets:/etc/letsencrypt
     depends_on:
       - coto
     restart: always
