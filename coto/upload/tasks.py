@@ -10,9 +10,42 @@ from django.conf import settings
 import ffmpeg
 import psutil
 
-__all__ = ("extract_video_metadata", "generate_hls")
+from upload.utils import attach_chunked_file_to_instance
+
+
+__all__ = (
+    "extract_video_metadata",
+    "generate_hls",
+    "attach_chunked_file_task",
+)
+
 
 logger = logging.getLogger(__name__)
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=10)
+def attach_chunked_file_task(self, video_pk, chunked_path):
+    try:
+        from upload.models import Video
+        video = Video.objects.get(pk=video_pk)
+    except Video.DoesNotExist:
+        logger.error("Video %s not found for attach_chunked_file_task", video_pk)
+        return
+
+    try:
+        # Только здесь происходит реальное присоединение файла
+        attach_chunked_file_to_instance(video, chunked_path)
+        video.save(update_fields=['file'])  # Сохраняем только поле file
+        
+        # Запускаем постобработку
+        extract_video_metadata.delay(video.pk)
+        generate_hls.delay(video.pk)
+    except Exception as exc:
+        logger.exception(
+            "attach_chunked_file_task failed for video %s, chunked=%s: %s",
+            video_pk, chunked_path, exc
+        )
+        raise self.retry(exc=exc)
 
 
 @shared_task

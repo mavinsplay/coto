@@ -1,0 +1,151 @@
+{% load i18n %}
+
+<div class="chunked-upload-widget" data-theme="">
+    <input type="hidden" name="chunked_file_path" class="chunked-path-input">
+    <input type="file" name="{{ widget.name }}" class="chunked-file-input" 
+           style="display:none" {% if widget.required %}required{% endif %}>
+    
+    <div class="chunked-dropzone" tabindex="0" aria-label="{% trans 'Загрузить файл' %}">
+        <div class="drop-icon">⬆</div>
+        <div class="drop-title">Перетащите файл сюда или</div>
+        <button type="button" class="drop-button">Выбрать файл</button>
+        <div class="drop-hint">Поддерживается: drag & drop, мультичанковая загрузка</div>
+
+        <!-- реальный input (name/id от widget) -->
+        <input
+          type="file"
+          name="{{ widget.name }}"
+          id="{{ widget.attrs.id }}"
+          {% if widget.attrs.required %}required{% endif %}
+          {% if widget.attrs.disabled %}disabled{% endif %}
+          class="chunked-file-input"
+          aria-hidden="true"
+        />
+    </div>
+    
+    <div class="chunked-progress-wrap" style="display:none" aria-hidden="true">
+        <div class="progress-left">
+            <div class="circular-progress" aria-hidden="true">
+                <svg viewBox="0 0 36 36" class="progress-ring">
+                    <path class="progress-bg" d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="progress-fg" stroke-dasharray="0,100" d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div class="progress-percent">0%</div>
+            </div>
+        </div>
+
+        <div class="progress-right">
+            <div class="progress-line">
+                <div class="line-bar">
+                    <div class="line-fill" style="width:0%"></div>
+                </div>
+            </div>
+
+            <div class="progress-meta">
+                <div class="meta-row"><span class="meta-label">Прогресс</span><span class="meta-value meta-percent">0%</span></div>
+                <div class="meta-row"><span class="meta-label">Скорость</span><span class="meta-value meta-speed">—</span></div>
+                <div class="meta-row"><span class="meta-label">ETA</span><span class="meta-value meta-eta">—</span></div>
+                <div class="meta-row"><span class="meta-label">Размер</span><span class="meta-value meta-size">—</span></div>
+            </div>
+
+            <div class="progress-actions">
+                <button type="button" class="btn-cancel">Отменить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* -------- Theme variables (light default) -------- */
+.chunked-upload-widget {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --text: #111111;
+  --muted: #6b6b6b;
+  --accent: #000000;
+  --border: #e6e6e6;
+  --glass: rgba(0,0,0,0.04);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color: var(--text);
+}
+
+/* dark theme override */
+.chunked-upload-widget.theme-dark {
+  --bg: #0f1113;
+  --panel: #0b0c0d;
+  --text: #f4f4f4;
+  --muted: #bdbdbd;
+  --accent: #ffffff;
+  --border: rgba(255,255,255,0.06);
+  --glass: rgba(255,255,255,0.03);
+}
+
+/* Dropzone */
+.chunked-dropzone {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:20px;
+  border-radius:12px;
+  border:2px dashed var(--accent);
+  background: linear-gradient(180deg,var(--panel) 0,var(--panel) 100%);
+  min-height:140px;
+  width:520px;
+  transition:box-shadow .18s ease, transform .12s ease, border-color .12s ease;
+  cursor:pointer;
+  margin-bottom:12px;
+  color:var(--text);
+}
+.chunked-dropzone.dragging {
+  border-color:var(--accent);
+  box-shadow: 0 12px 30px var(--glass);
+  transform: translateY(-2px);
+}
+.drop-icon { font-size:28px; color:var(--accent); }
+.drop-title { font-weight:600; font-size:16px; color:var(--text); }
+.drop-button {
+  background:var(--accent); color:var(--panel); border:none; padding:8px 14px; border-radius:8px; cursor:pointer;
+  font-weight:600;
+  transition: background .12s ease, transform .08s ease;
+}
+.drop-button:hover { transform:translateY(-1px); opacity:0.95; }
+.drop-hint { font-size:12px; color:var(--muted); }
+
+/* hide native input but keep in DOM */
+.chunked-file-input { position:absolute; opacity:0; width:1px; height:1px; pointer-events:none; }
+
+/* Progress area */
+.chunked-progress-wrap { display:flex; gap:12px; align-items:center; width:520px; padding:12px; border-radius:10px; border:1px solid var(--border); background:var(--panel); box-shadow: 0 6px 18px var(--glass); }
+.progress-left { width:88px; display:flex; align-items:center; justify-content:center; }
+.circular-progress { position:relative; width:72px; height:72px; }
+.progress-ring { width:72px; height:72px; transform:rotate(-90deg); }
+.progress-bg { fill:none; stroke:var(--border); stroke-width:3.5; }
+.progress-fg { fill:none; stroke:var(--accent); stroke-width:3.5; stroke-linecap:round; transition: stroke-dasharray .2s linear; }
+.progress-percent { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; color:var(--text); transform: rotate(90deg); }
+
+.progress-right { flex:1; display:flex; flex-direction:column; gap:8px; }
+.progress-line .line-bar { height:8px; background:var(--border); border-radius:6px; overflow:hidden; }
+.line-fill { height:100%; width:0%; background: linear-gradient(90deg,var(--accent), #444); transition: width .18s linear; }
+
+.progress-meta { display:flex; gap:12px; flex-wrap:wrap; }
+.meta-row { display:flex; justify-content:space-between; width:48%; font-size:12px; color:var(--text); }
+.meta-label { color:var(--muted); }
+.progress-actions { display:flex; gap:8px; margin-top:4px; }
+.btn-cancel { background:transparent; border:1px solid var(--border); padding:6px 10px; border-radius:8px; cursor:pointer; color:var(--text); }
+
+/* Theme toggle positioning */
+.theme-switcher { display:flex; justify-content:flex-end; margin-bottom:8px; }
+.theme-toggle { background:transparent; border:1px solid var(--border); padding:4px 8px; border-radius:6px; cursor:pointer; color:var(--text); }
+
+/* responsive */
+@media (max-width:560px) {
+  .chunked-dropzone, .chunked-progress-wrap { width:100%; }
+  .meta-row { width:100%; }
+}
+</style>

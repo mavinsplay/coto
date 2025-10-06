@@ -1,17 +1,56 @@
-from django.contrib import admin
+from django import forms
+from django.contrib import admin, messages
+from django.db import transaction
 from django.http import JsonResponse
 from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from upload.models import Playlist, PlaylistItem, Video
-
+from upload.tasks import attach_chunked_file_task
+from upload.widgets import ChunkedAdminFileWidget
 
 __all__ = ["VideoAdmin"]
 
 
+class VideoAdminForm(forms.ModelForm):
+    chunked_file_path = forms.CharField(required=False, widget=forms.HiddenInput)
+    
+    class Meta:
+        model = Video
+        fields = "__all__"
+        widgets = {
+            "file": ChunkedAdminFileWidget(),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # Если есть chunked_path, полностью блокируем обработку file
+        if self.data.get('chunked_file_path'):
+            # Удаляем file из всех возможных мест
+            if 'file' in cleaned_data:
+                del cleaned_data['file']
+            if 'file' in self.files:
+                del self.files['file']
+            # Очищаем bound_data для поля file
+            self.data = self.data.copy()
+            if 'file' in self.data:
+                del self.data['file']
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Важно: очищаем поле file, если есть chunked_path
+        if self.data.get('chunked_file_path'):
+            instance.file = None
+        if commit:
+            instance.save()
+        return instance
+
+
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):
+    form = VideoAdminForm
     list_display = (
         "title",
         "get_thumbnail",
@@ -59,10 +98,35 @@ class VideoAdmin(admin.ModelAdmin):
     )
 
     class Media:
-        js = ("admin/js/hls_progress.js",)
+        js = (
+            "admin/js/hls_progress.js",
+            "admin/js/chunked_upload_admin.js",
+        )
         css = {
-            "all": ("admin/css/hls_progress.css",),
+            "all": (
+                "admin/css/hls_progress.css",
+                "admin/css/chunked_upload_admin.css",
+            ),
         }
+
+    def save_model(self, request, obj, form, change):
+        chunked_path = form.cleaned_data.get('chunked_file_path')
+        
+        if chunked_path:
+            # Сохраняем объект без файла
+            with transaction.atomic():
+                # Гарантированно очищаем поле файла
+                obj.file = None
+                super().save_model(request, obj, form, change)
+                
+                # Запускаем обработку только через celery
+                transaction.on_commit(
+                    lambda: attach_chunked_file_task.delay(obj.pk, chunked_path)
+                )
+            return
+            
+        # Стандартное сохранение если нет chunked_path
+        super().save_model(request, obj, form, change)
 
     def get_hls_progress(self, obj):
         # мини-полоска в списке

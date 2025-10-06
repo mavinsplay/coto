@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 from pathlib import Path
 import sys
@@ -14,6 +15,9 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+CHUNKED_UPLOAD_EXPIRATION_DELTA = timedelta(days=1)
+CHUNKED_UPLOAD_PATH = "chunked_uploads/%Y/%m/%d"
+CHUNKED_UPLOAD_MAX_BYTES = None
 
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY",
@@ -56,6 +60,7 @@ INSTALLED_APPS = [
     # Third-party apps
     "daphne",
     "channels",
+    "chunked_upload",
     "sorl.thumbnail",
     # Django apps
     "django.contrib.admin",
