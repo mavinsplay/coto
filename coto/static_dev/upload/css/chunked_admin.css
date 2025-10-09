@@ -1,0 +1,56 @@
+/* chunked_admin.css */
+.chunked-uploader { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; max-width:520px; }
+.chunked-uploader .chunked-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+}
+.drop-area {
+  border: 2px dashed rgba(0,0,0,0.12);
+  border-radius: 12px;
+  padding: 26px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition: box-shadow .15s, background-color .15s;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.01));
+}
+.chunked-uploader .drop-area {
+    cursor: pointer;
+    padding: 2rem;
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    text-align: center;
+}
+.drop-area.dragover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-color: #6aa0ff; background-color: rgba(106,160,255,0.03); }
+.chunked-uploader .drop-area.dragover {
+    border-color: #2196f3;
+    background: rgba(33, 150, 243, 0.1);
+}
+.drop-inner { text-align:center; color: var(--uploader-fg); }
+.drop-text { font-size: 15px; font-weight:600; margin-top:6px; }
+.hint { font-size:12px; color: #6b7280; }
+
+/* progress */
+.upload-status { margin-top:12px; }
+.progress { height:10px; background: rgba(0,0,0,0.06); border-radius:8px; overflow:hidden; }
+.progress-bar { height:100%; width:0%; transition: width .2s linear; background: linear-gradient(90deg,#4f46e5,#06b6d4); }
+
+/* metrics */
+.metrics { margin-top:8px; font-size:13px; color:#374151; }
+
+/* theme aware */
+@media (prefers-color-scheme: dark) {
+  .drop-area { border-color: rgba(255,255,255,0.08); background: rgba(255,255,255,0.01); }
+  .drop-text, .hint, .metrics { color: #d1d5db; }
+  :root { --uploader-fg: #e6eefc; }
+}
+@media (prefers-color-scheme: light) {
+  :root { --uploader-fg: #111827; }
+}

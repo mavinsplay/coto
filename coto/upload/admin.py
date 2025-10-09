@@ -1,17 +1,56 @@
+from django import forms
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from upload.models import Playlist, PlaylistItem, Video
+from upload.widgets import ChunkedAdminFileWidget
 
 
 __all__ = ["VideoAdmin"]
 
 
+class VideoAdminForm(forms.ModelForm):
+    class Meta:
+        model = Video
+        fields = "__all__"
+        widgets = {
+            "file": ChunkedAdminFileWidget(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "file" in self.fields:
+            self.fields["file"].required = False
+
+    def clean_file(self):
+        file_field = self.cleaned_data.get("file")
+        upload_id = self.data.get("file_upload_id")
+        if upload_id:
+            try:
+                video = Video.objects.get(pk=upload_id)
+                return video.file
+            except Video.DoesNotExist:
+                pass
+
+        if not self.instance.pk and not file_field and not upload_id:
+            raise ValidationError("Необходимо загрузить файл")
+
+        if self.instance.pk and not file_field:
+            return self.instance.file
+
+        return file_field
+
+    def clean(self):
+        return super().clean()
+
+
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):
+    form = VideoAdminForm
     list_display = (
         "title",
         "get_thumbnail",
@@ -63,6 +102,21 @@ class VideoAdmin(admin.ModelAdmin):
         css = {
             "all": ("admin/css/hls_progress.css",),
         }
+
+    def save_model(self, request, obj, form, change):
+        upload_id = request.POST.get("file_upload_id")
+
+        if upload_id and not change:
+            try:
+                temp_video = Video.objects.get(pk=upload_id)
+                obj.file = temp_video.file
+                super().save_model(request, obj, form, change)
+                temp_video.delete()
+                return
+            except Video.DoesNotExist:
+                pass
+
+        super().save_model(request, obj, form, change)
 
     def get_hls_progress(self, obj):
         # мини-полоска в списке

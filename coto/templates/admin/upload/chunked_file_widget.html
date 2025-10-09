@@ -1,0 +1,45 @@
+<!-- templates/admin/upload/chunked_file_widget.html -->
+<div class="chunked-uploader" 
+     data-start-url="{{ widget.chunk_start_url }}" 
+     data-complete-url="{{ widget.chunk_complete_url }}" 
+     data-input-name="{{ widget.name }}">
+    
+    <input type="file" 
+           name="{{ widget.name }}" 
+           id="id_{{ widget.name }}" 
+           class="chunked-input" 
+           accept="video/*" />
+    
+    <!-- Скрытое поле для upload_id после успешной загрузки -->
+    <input type="hidden" 
+           name="{{ widget.name }}_upload_id" 
+           id="id_{{ widget.name }}_upload_id" 
+           class="chunked-upload-id" 
+           value="" />
+    
+    <div class="drop-area" tabindex="0">
+      <div class="drop-inner">
+        <svg class="cloud" viewBox="0 0 24 24" width="48" height="48" aria-hidden="true">
+          <path d="M19 18H6a4 4 0 0 1 0-8 6 6 0 0 1 11.1-2.4A4.5 4.5 0 0 1 22 12.5 4.5 4.5 0 0 1 19 18z"/>
+        </svg>
+        <div class="drop-text">Перетащите файл сюда или нажмите, чтобы выбрать</div>
+        <div class="hint">Поддерживаются видео — MP4, MKV, AVI...</div>
+      </div>
+    </div>
+  
+    <div class="upload-status" hidden>
+      <div class="progress">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="metrics">
+        <span class="uploaded">0 MB</span> /
+        <span class="total">0 MB</span>
+        • <span class="speed">0 MB/s</span>
+        • <span class="eta">—</span>
+      </div>
+      <div class="controls">
+        <button type="button" class="btn pause" hidden>Пауза</button>
+        <button type="button" class="btn cancel">Отменить</button>
+      </div>
+    </div>
+</div>

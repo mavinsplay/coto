@@ -14,3 +14,4 @@ channels_redis==4.3.0
 daphne==4.2.1
 colorlog==6.9.0
 psutil==7.0.0
+git+https://github.com/juliomalegria/django-chunked-upload.git@69dfedf148fe7793e372116ca3c88187f5d90ea2

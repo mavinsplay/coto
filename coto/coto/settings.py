@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 from pathlib import Path
 import sys
@@ -51,11 +52,16 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = MAIL
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+CHUNKED_UPLOAD_EXPIRATION_DELTA = timedelta(days=1)
+CHUNKED_UPLOAD_PATH = "chunked_uploads/%Y/%m/%d"
+CHUNKED_UPLOAD_TO = CHUNKED_UPLOAD_PATH + "/{{ instance.upload_id }}.part"
+CHUNKED_UPLOAD_MAX_BYTES = None
 
 INSTALLED_APPS = [
     # Third-party apps
     "daphne",
     "channels",
+    "chunked_upload",
     "sorl.thumbnail",
     # Django apps
     "django.contrib.admin",
