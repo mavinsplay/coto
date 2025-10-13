@@ -16,6 +16,44 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
+def delete_video_file_delayed(video_id, delay=5):
+    """Удаляет исходный видеофайл с повторными попытками"""
+    from upload.models import Video
+    from django.core.files.storage import default_storage
+
+    max_attempts = 10
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            video = Video.objects.get(pk=video_id)
+            if video.file and default_storage.exists(video.file.name):
+                default_storage.delete(video.file.name)
+                logger.info(
+                    f"[Delete Task] Файл удален: {video.file.name}",
+                )
+                return
+        except Video.DoesNotExist:
+            logger.warning(
+                f"[Delete Task] Видео {video_id} не найдено",
+            )
+            return
+
+        except Exception as e:
+            logger.warning(
+                f"[Delete Task] Попытка {attempt}/{max_attempts}: " f"{e}",
+            )
+            if attempt < max_attempts:
+                time.sleep(delay)
+
+            continue
+
+    logger.error(
+        f"[Delete Task] Не удалось удалить файл видео "
+        f"{video_id} после {max_attempts} попыток",
+    )
+
+
+@shared_task
 def extract_video_metadata(video_id):
     logger.info(f"[Metadata Task] Начало обработки видео {video_id}")
     try:
@@ -28,7 +66,7 @@ def extract_video_metadata(video_id):
 
         # Определение длительности
         if not video.duration:
-            logger.info(f"[Metadata Task] Получение длительности...")
+            logger.info("[Metadata Task] Получение длительности...")
             probe = ffmpeg.probe(str(file_path))
             duration_seconds = float(probe["format"]["duration"])
             video.duration = timedelta(seconds=duration_seconds)
@@ -36,12 +74,12 @@ def extract_video_metadata(video_id):
 
         # Определение размера
         if not video.file_size:
-            logger.info(f"[Metadata Task] Получение размера...")
+            logger.info("[Metadata Task] Получение размера...")
             video.file_size = file_path.stat().st_size
-            logger.info(f"[Metadata Task] Размер: {video.file_size} байт")
+            logger.info("[Metadata Task] Размер: {video.file_size} байт")
 
         video.save(update_fields=["duration", "file_size"])
-        logger.info(f"[Metadata Task] Сохранено успешно")
+        logger.info("[Metadata Task] Сохранено успешно")
     except Video.DoesNotExist:
         logger.error(f"[Metadata Task] Видео {video_id} не найдено")
     except Exception as e:
@@ -139,7 +177,7 @@ def generate_hls(self, video_id):
     Генерация HLS с автоподбором параметров и обновлением прогресса.
     """
     logger.info(f"[HLS Task] Начало обработки видео {video_id}")
-    
+
     try:
         from upload.models import Video
 
@@ -148,7 +186,7 @@ def generate_hls(self, video_id):
         except Video.DoesNotExist:
             logger.error(f"[HLS Task] Видео {video_id} не найдено")
             return
-        
+
         raw_path = Path(video.file.path)
         logger.info(f"[HLS Task] Путь файла: {raw_path}")
         logger.info(f"[HLS Task] Файл существует: {raw_path.exists()}")
@@ -158,17 +196,17 @@ def generate_hls(self, video_id):
         video.hls_status = "pending"
         video.hls_log = ""
         video.save(update_fields=["hls_progress", "hls_status", "hls_log"])
-        logger.info(f"[HLS Task] Состояние инициализировано")
+        logger.info("[HLS Task] Состояние инициализировано")
 
         out_dir = Path(settings.MEDIA_ROOT) / "streams" / str(video.pk)
         out_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"[HLS Task] Выходная директория: {out_dir}")
+        logger.info("[HLS Task] Выходная директория: {out_dir}")
 
         manifest_path = out_dir / "master.m3u8"
         segment_pattern = out_dir / "seg%d.ts"
 
         # Попытка получить метаданные через ffmpeg.probe
-        logger.info(f"[HLS Task] Получение метаданных видео...")
+        logger.info("[HLS Task] Получение метаданных видео...")
         try:
             probe = ffmpeg.probe(str(raw_path))
         except Exception as e:
@@ -199,7 +237,10 @@ def generate_hls(self, video_id):
 
         video_codec = v_stream.get("codec_name") if v_stream else None
         audio_codec = a_stream.get("codec_name") if a_stream else None
-        logger.info(f"[HLS Task] Видео кодек: {video_codec}, Аудио кодек: {audio_codec}")
+        logger.info(
+            f"[HLS Task] Видео кодек:\
+                {video_codec}, Аудио кодек: {audio_codec}",
+        )
 
         def parse_fps(s):
             if not s:
@@ -339,7 +380,10 @@ def generate_hls(self, video_id):
                                 )
 
                 proc.wait()
-                logger.info(f"[HLS Task] Phase {phase_label} завершена, код: {proc.returncode}")
+                logger.info(
+                    f"[HLS Task] Phase {phase_label} \
+                        завершена, код: {proc.returncode}",
+                )
                 if proc.returncode != 0:
                     raise subprocess.CalledProcessError(proc.returncode, cmd)
             finally:
@@ -355,7 +399,9 @@ def generate_hls(self, video_id):
             and audio_codec in ("aac", "mp4a")
             and input_fps >= 59.5
         ):
-            logger.info("[HLS Task] Используется копирование без перекводирования")
+            logger.info(
+                "[HLS Task] Используется копирование без перекводирования",
+            )
             cmd = [
                 "ffmpeg",
                 "-y",
@@ -395,6 +441,8 @@ def generate_hls(self, video_id):
                     "hls_log",
                 ],
             )
+            delete_video_file_delayed.delay(video.pk, delay=5)
+            logger.info("[HLS Task] Запланировано удаление исходного файла")
             logger.info("[HLS Task] Обработка завершена (copy mode)")
             return
 
@@ -402,7 +450,9 @@ def generate_hls(self, video_id):
         logger.info("[HLS Task] Используется перекводирование")
         mem_mb = int(psutil.virtual_memory().available / (1024 * 1024))
         cpu_count = os.cpu_count() or 1
-        logger.info(f"[HLS Task] Доступная память: {mem_mb}MB, ЦПУ: {cpu_count}")
+        logger.info(
+            f"[HLS Task] Доступная память: {mem_mb}MB, ЦПУ: {cpu_count}",
+        )
 
         if mem_mb < 1800:
             preset = "fast"
@@ -425,7 +475,10 @@ def generate_hls(self, video_id):
             rc_lookahead = 20
             crf = 18
 
-        logger.info(f"[HLS Task] Параметры кодирования: preset={preset}, threads={threads}, crf={crf}")
+        logger.info(
+            f"[HLS Task] Параметры кодирования:\
+                preset={preset}, threads={threads}, crf={crf}",
+        )
 
         vf_filter = (
             "scale='if(gt(a,1920/1080),1920,trunc(iw/2)*2)':"
@@ -494,7 +547,8 @@ def generate_hls(self, video_id):
             "-nostats",
         ]
         run_ffmpeg_with_progress(seg_cmd, "segment", duration)
-
+        delete_video_file_delayed.delay(video.pk, delay=5)
+        logger.info("[HLS Task] Запланировано удаление исходного файла")
         try:
             if tmp_mp4.exists():
                 tmp_mp4.unlink()

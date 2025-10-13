@@ -61,7 +61,7 @@ class AdminChunkedUploadCompleteView(
             file=file_field,
             uploaded_by=(req.user if req is not None else None),
         )
-        video.save(_skip_tasks=True)
+        video.save()
 
         try:
             chunked_upload.delete()

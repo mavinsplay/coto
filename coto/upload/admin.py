@@ -44,6 +44,52 @@ class VideoAdminForm(forms.ModelForm):
 
         return file_field
 
+    def save(self, commit=True):
+        upload_id = self.data.get("file_upload_id")
+        if upload_id and not self.instance.pk:
+            try:
+                existing = Video.objects.get(pk=upload_id)
+            except Video.DoesNotExist:
+                return super().save(commit=commit)
+
+            self.instance = existing
+            cd = self.cleaned_data
+            if cd.get("title"):
+                existing.title = cd.get("title")
+
+            existing.description = (
+                cd.get("description")
+                if "description" in cd
+                else existing.description
+            )
+
+            if "uploaded_by" in cd and cd.get("uploaded_by") is not None:
+                existing.uploaded_by = cd.get("uploaded_by")
+
+            if cd.get("file"):
+                existing.file = cd.get("file")
+
+            # Если загрузили миниатюру через форму — обновим
+            if cd.get("thumbnail"):
+                existing.thumbnail = cd.get("thumbnail")
+
+            if commit:
+                existing.save()
+                try:
+                    super().save_m2m()
+                except Exception:
+                    pass
+
+            return existing
+
+        return super().save(commit=commit)
+
+    def save_m2m(self):
+        try:
+            return super().save_m2m()
+        except AttributeError:
+            return None
+
     def clean(self):
         return super().clean()
 
