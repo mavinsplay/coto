@@ -63,11 +63,6 @@ class AdminChunkedUploadCompleteView(
         )
         video.save()
 
-        try:
-            chunked_upload.delete()
-        except Exception:
-            pass
-
         return {
             "video_id": video.pk,
             "video_url": video.file.url,
