@@ -67,6 +67,7 @@ class VideoAdmin(admin.ModelAdmin):
         "get_hls_progress_field",
         "get_hls_status_field",
         "get_human_filesize_field",
+        "chunk_file_name_filed",
     )
     fieldsets = (
         (
@@ -78,6 +79,7 @@ class VideoAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "file",
+                    "chunk_file_name_filed",
                     "thumbnail",
                     "get_thumbnail",
                 ),
@@ -102,21 +104,6 @@ class VideoAdmin(admin.ModelAdmin):
         css = {
             "all": ("admin/css/hls_progress.css",),
         }
-
-    def save_model(self, request, obj, form, change):
-        upload_id = request.POST.get("file_upload_id")
-
-        if upload_id and not change:
-            try:
-                temp_video = Video.objects.get(pk=upload_id)
-                obj.file = temp_video.file
-                super().save_model(request, obj, form, change)
-                temp_video.delete()
-                return
-            except Video.DoesNotExist:
-                pass
-
-        super().save_model(request, obj, form, change)
 
     def get_hls_progress(self, obj):
         # мини-полоска в списке
@@ -291,6 +278,15 @@ class VideoAdmin(admin.ModelAdmin):
         return self._get_human_filesize_value(obj)
 
     get_human_filesize.short_description = _("Размер файла")
+
+    def chunk_file_name_filed(self, obj):
+        chunk_file = obj.file
+        if chunk_file:
+            return format_html(f"<p>{chunk_file}</p>")
+
+        return format_html("<p>Файл ещё не загужен</p>")
+
+    chunk_file_name_filed.short_description = _("имя чанка файла")
 
 
 class PlaylistItemInline(admin.TabularInline):

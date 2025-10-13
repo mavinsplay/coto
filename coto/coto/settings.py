@@ -54,7 +54,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CHUNKED_UPLOAD_EXPIRATION_DELTA = timedelta(days=1)
 CHUNKED_UPLOAD_PATH = "chunked_uploads/%Y/%m/%d"
-CHUNKED_UPLOAD_TO = CHUNKED_UPLOAD_PATH + "/{{ instance.upload_id }}.part"
+CHUNKED_UPLOAD_TO = CHUNKED_UPLOAD_PATH + "/%Y/%m/%d.part"
 CHUNKED_UPLOAD_MAX_BYTES = None
 
 INSTALLED_APPS = [

@@ -1,11 +1,21 @@
 FROM python:3.12.4-slim
 
-# Установка зависимостей
-RUN apt update && apt install -y \
-    gettext \
-    ffmpeg \
-    build-essential \
-    libpq-dev \
+# Avoid interactive prompts and make apt tolerant to release-info changes.
+ARG DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND}
+
+# Update + install. Use --no-install-recommends to keep image small.
+RUN apt-get update --allow-releaseinfo-change -y \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      gnupg \
+      dirmngr \
+      git \
+      gettext \
+      ffmpeg \
+      build-essential \
+      libpq-dev \
+ && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
 # Копируем requirements и устанавливаем зависимости

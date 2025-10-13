@@ -7,8 +7,6 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from upload.tasks import extract_video_metadata, generate_hls
-
 __all__ = "Video"
 
 
@@ -60,10 +58,19 @@ class Video(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
+        skip_tasks = kwargs.pop("_skip_tasks", False)
+        update_fields = kwargs.get("update_fields")
         is_new = self.pk is None
-        super().save(*args, **kwargs)
+        if update_fields and self.pk:
+            try:
+                Video.objects.get(pk=self.pk)
+            except Video.DoesNotExist:
+                return
 
-        if is_new:
+        super().save(*args, **kwargs)
+        if is_new and not skip_tasks:
+            from upload.tasks import extract_video_metadata, generate_hls
+
             extract_video_metadata.delay(self.pk)
             generate_hls.delay(self.pk)
 

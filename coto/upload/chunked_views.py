@@ -53,7 +53,7 @@ class AdminChunkedUploadCompleteView(
             )
         )
 
-        video = Video.objects.create(
+        video = Video(
             title=title,
             description=(
                 req.POST.get("description", "") if req is not None else ""
@@ -61,6 +61,7 @@ class AdminChunkedUploadCompleteView(
             file=file_field,
             uploaded_by=(req.user if req is not None else None),
         )
+        video.save(_skip_tasks=True)
 
         try:
             chunked_upload.delete()

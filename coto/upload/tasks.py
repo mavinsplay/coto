@@ -17,27 +17,36 @@ logger = logging.getLogger(__name__)
 
 @shared_task
 def extract_video_metadata(video_id):
+    logger.info(f"[Metadata Task] Начало обработки видео {video_id}")
     try:
         from upload.models import Video
 
         video = Video.objects.get(pk=video_id)
         file_path = Path(video.file.path)
+        logger.info(f"[Metadata Task] Путь файла: {file_path}")
+        logger.info(f"[Metadata Task] Файл существует: {file_path.exists()}")
 
         # Определение длительности
         if not video.duration:
+            logger.info(f"[Metadata Task] Получение длительности...")
             probe = ffmpeg.probe(str(file_path))
             duration_seconds = float(probe["format"]["duration"])
             video.duration = timedelta(seconds=duration_seconds)
+            logger.info(f"[Metadata Task] Длительность: {video.duration}")
 
         # Определение размера
         if not video.file_size:
+            logger.info(f"[Metadata Task] Получение размера...")
             video.file_size = file_path.stat().st_size
+            logger.info(f"[Metadata Task] Размер: {video.file_size} байт")
 
         video.save(update_fields=["duration", "file_size"])
+        logger.info(f"[Metadata Task] Сохранено успешно")
+    except Video.DoesNotExist:
+        logger.error(f"[Metadata Task] Видео {video_id} не найдено")
     except Exception as e:
         logger.error(
-            "[Metadata Task] Ошибка",
-            e,
+            f"[Metadata Task] Ошибка при обработке видео {video_id}: {e}",
             exc_info=True,
         )
 
@@ -129,28 +138,41 @@ def generate_hls(self, video_id):
     """
     Генерация HLS с автоподбором параметров и обновлением прогресса.
     """
+    logger.info(f"[HLS Task] Начало обработки видео {video_id}")
+    
     try:
         from upload.models import Video
 
-        video = Video.objects.get(pk=video_id)
+        try:
+            video = Video.objects.get(pk=video_id)
+        except Video.DoesNotExist:
+            logger.error(f"[HLS Task] Видео {video_id} не найдено")
+            return
+        
         raw_path = Path(video.file.path)
+        logger.info(f"[HLS Task] Путь файла: {raw_path}")
+        logger.info(f"[HLS Task] Файл существует: {raw_path.exists()}")
 
         # Инициализация состояния
         video.hls_progress = 0
         video.hls_status = "pending"
         video.hls_log = ""
         video.save(update_fields=["hls_progress", "hls_status", "hls_log"])
+        logger.info(f"[HLS Task] Состояние инициализировано")
 
         out_dir = Path(settings.MEDIA_ROOT) / "streams" / str(video.pk)
         out_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"[HLS Task] Выходная директория: {out_dir}")
 
         manifest_path = out_dir / "master.m3u8"
         segment_pattern = out_dir / "seg%d.ts"
 
         # Попытка получить метаданные через ffmpeg.probe
+        logger.info(f"[HLS Task] Получение метаданных видео...")
         try:
             probe = ffmpeg.probe(str(raw_path))
-        except Exception:
+        except Exception as e:
+            logger.warning(f"[HLS Task] ffmpeg.probe ошибка: {e}")
             probe = {}
 
         try:
@@ -162,6 +184,8 @@ def generate_hls(self, video_id):
         if not duration:
             duration = _ffprobe_duration(raw_path)
             logger.debug("[HLS Task] ffprobe fallback duration=%s", duration)
+
+        logger.info(f"[HLS Task] Длительность видео: {duration} сек")
 
         # Найти потоки
         v_stream = None
@@ -175,6 +199,7 @@ def generate_hls(self, video_id):
 
         video_codec = v_stream.get("codec_name") if v_stream else None
         audio_codec = a_stream.get("codec_name") if a_stream else None
+        logger.info(f"[HLS Task] Видео кодек: {video_codec}, Аудио кодек: {audio_codec}")
 
         def parse_fps(s):
             if not s:
@@ -191,6 +216,7 @@ def generate_hls(self, video_id):
                 return 0.0
 
         input_fps = parse_fps(v_stream) if v_stream else 0.0
+        logger.info(f"[HLS Task] FPS видео: {input_fps}")
 
         def run_ffmpeg_with_progress(cmd, phase_label, duration_seconds):
             """
@@ -209,6 +235,7 @@ def generate_hls(self, video_id):
                 force=True,
             )
 
+            logger.info(f"[HLS Task] Команда ffmpeg: {' '.join(cmd)}")
             proc = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -312,6 +339,7 @@ def generate_hls(self, video_id):
                                 )
 
                 proc.wait()
+                logger.info(f"[HLS Task] Phase {phase_label} завершена, код: {proc.returncode}")
                 if proc.returncode != 0:
                     raise subprocess.CalledProcessError(proc.returncode, cmd)
             finally:
@@ -327,6 +355,7 @@ def generate_hls(self, video_id):
             and audio_codec in ("aac", "mp4a")
             and input_fps >= 59.5
         ):
+            logger.info("[HLS Task] Используется копирование без перекводирования")
             cmd = [
                 "ffmpeg",
                 "-y",
@@ -366,11 +395,14 @@ def generate_hls(self, video_id):
                     "hls_log",
                 ],
             )
+            logger.info("[HLS Task] Обработка завершена (copy mode)")
             return
 
         # --- autotune ---
+        logger.info("[HLS Task] Используется перекводирование")
         mem_mb = int(psutil.virtual_memory().available / (1024 * 1024))
         cpu_count = os.cpu_count() or 1
+        logger.info(f"[HLS Task] Доступная память: {mem_mb}MB, ЦПУ: {cpu_count}")
 
         if mem_mb < 1800:
             preset = "fast"
@@ -392,6 +424,8 @@ def generate_hls(self, video_id):
             threads = max(1, min(cpu_count, 4))
             rc_lookahead = 20
             crf = 18
+
+        logger.info(f"[HLS Task] Параметры кодирования: preset={preset}, threads={threads}, crf={crf}")
 
         vf_filter = (
             "scale='if(gt(a,1920/1080),1920,trunc(iw/2)*2)':"
@@ -484,6 +518,7 @@ def generate_hls(self, video_id):
                 "hls_log",
             ],
         )
+        logger.info("[HLS Task] Обработка завершена успешно")
 
     except subprocess.CalledProcessError as cpe:
         logger.error(
