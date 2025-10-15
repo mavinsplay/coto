@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from channels.db import database_sync_to_async
@@ -68,6 +69,10 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
                     if self.user.is_authenticated
                     else "Гость"
                 )
+                timestamp = data.get("timestamp")
+                if not timestamp:
+                    timestamp = datetime.datetime.utcnow().isoformat() + "Z"
+
                 await self.save_message(
                     message,
                     username,
@@ -80,6 +85,7 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
                         "message": message,
                         "username": username,
                         "system": data.get("system", False),
+                        "timestamp": timestamp,
                     },
                 )
 
@@ -163,6 +169,10 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
     # ========== Group handlers ==========
     async def chat_message(self, event):
+        ts = event.get("timestamp")
+        if not ts:
+            ts = datetime.datetime.utcnow().isoformat() + "Z"
+
         await self.send(
             text_data=json.dumps(
                 {
@@ -170,6 +180,7 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
                     "username": event["username"],
                     "message": event["message"],
                     "system": event.get("system", False),
+                    "timestamp": ts,
                 },
             ),
         )
