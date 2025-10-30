@@ -1,8 +1,19 @@
 {% load static %}
 {% load i18n %}
-<footer class="container-fluid mt-5 mb-2 ">
-  <div class="mx-2 border-top border-1 p-2 d-flex justify-content-center">
-    <p class="m-2">©{% now "Y" %}. Coto</p>
+<footer class="container-fluid mt-5 mb-2">
+  <div class="mx-2 border-top border-1 p-3">
+    <div class="row align-items-center">
+      <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
+        <p class="m-0 text-muted">
+          <i class="bi bi-c-circle me-1"></i>
+          {% now "Y" %} Coto. Все права защищены.
+        </p>
+      </div>
+      <div class="col-md-6 text-center text-md-end">
+        <small class="text-muted">
+          Создано с любовью ❤️ для совместного просмотра
+        </small>
+      </div>
+    </div>
   </div>
 </footer>
-

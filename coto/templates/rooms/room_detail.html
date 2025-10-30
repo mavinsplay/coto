@@ -2,18 +2,26 @@
 {% load static %}
 
 {% block content %}
-<div class="container">
-  <div class="room-header text-center">
-    <h1 class="display-5">{{ room.name }}</h1>
-    <p class="text-muted">
-      Организатор: <strong>{{ room.host.username }}</strong> |
-      Участников: <strong id="participants-count">{{ room.participants.count }}</strong><strong> / {{ room.limit_participants }}</strong>
-    </p>
+<div class="container py-4">
+  <!-- Room Header -->
+  <div class="room-header text-center mb-4 fade-in">
+    <h1 class="display-5 fw-bold mb-2">{{ room.name }}</h1>
+    <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
+      <span class="badge bg-primary rounded-pill px-3 py-2">
+        <i class="bi bi-person-circle me-1"></i>
+        {{ room.host.username }}
+      </span>
+      <span class="badge bg-secondary rounded-pill px-3 py-2">
+        <i class="bi bi-people-fill me-1"></i>
+        <span id="participants-count">{{ room.participants.count }}</span> / {{ room.limit_participants }}
+      </span>
+    </div>
   </div>
 
-  <div class="row">
-    <div class="col-lg-8 mb-4">
-      <div class="card shadow-sm">
+  <div class="row g-4">
+    <!-- Video Player -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm fade-in">
         <div class="card-body p-0">
           <div class="video-wrapper">
             <video
@@ -36,59 +44,148 @@
           </div>
         </div>
       </div>
+
+      <!-- Action Buttons -->
+      <div class="d-grid gap-2 mt-3">
+        {% if user.is_authenticated %}
+          {% if user in room.participants.all %}
+            <form method="post" action="{% url 'rooms:leave' room.pk %}">
+              {% csrf_token %}
+              <button class="btn btn-outline-danger btn-lg w-100" type="submit">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                Отключиться
+              </button>
+            </form>
+          {% else %}
+            <form method="post" action="{% url 'rooms:join' room.pk %}">
+              {% csrf_token %}
+              <button class="btn btn-primary btn-lg w-100" type="submit">
+                <i class="bi bi-box-arrow-in-right me-2"></i>
+                Подключиться
+              </button>
+            </form>
+          {% endif %}
+        {% else %}
+          <a href="{% url 'login' %}" class="btn btn-secondary btn-lg">
+            <i class="bi bi-person-plus me-2"></i>
+            Войдите, чтобы подключиться
+          </a>
+        {% endif %}
+        <a href="{% url 'rooms:list' %}" class="btn btn-light btn-lg">
+          <i class="bi bi-arrow-left me-2"></i>
+          Назад к списку комнат
+        </a>
+      </div>
     </div>
 
-    <div class="col-lg-4 mb-6" id="chat-container" data-room-id="{{ room.pk }}">
-      <div class="card shadow-sm h-100">
+    <!-- Chat & Tabs Sidebar -->
+    <div class="col-lg-4" id="chat-container" data-room-id="{{ room.pk }}">
+      <div class="card shadow-sm h-100 fade-in">
         
-        <!-- Tabs -->
+        <!-- Tabs Navigation -->
         <div class="card-header p-0">
           <ul class="nav nav-tabs nav-fill" id="room-tabs" role="tablist">
             <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button" role="tab" aria-controls="chat-pane" aria-selected="true">
-                💬 Чат
+              <button 
+                class="nav-link active" 
+                id="chat-tab" 
+                data-bs-toggle="tab" 
+                data-bs-target="#chat-pane" 
+                type="button" 
+                role="tab" 
+                aria-controls="chat-pane" 
+                aria-selected="true"
+              >
+                <i class="bi bi-chat-dots me-1"></i>
+                Чат
               </button>
             </li>
             {% if room.playlist %}
             <li class="nav-item" role="presentation">
-              <button class="nav-link" id="playlist-tab" data-bs-toggle="tab" data-bs-target="#playlist-pane" type="button" role="tab" aria-controls="playlist-pane" aria-selected="false">
-                📺 Плейлист
+              <button 
+                class="nav-link" 
+                id="playlist-tab" 
+                data-bs-toggle="tab" 
+                data-bs-target="#playlist-pane" 
+                type="button" 
+                role="tab" 
+                aria-controls="playlist-pane" 
+                aria-selected="false"
+              >
+                <i class="bi bi-collection-play me-1"></i>
+                Плейлист
               </button>
             </li>
             {% endif %}
             <li class="nav-item" role="presentation">
-              <button class="nav-link" id="participants-tab" data-bs-toggle="tab" data-bs-target="#participants-pane" type="button" role="tab" aria-controls="participants-pane" aria-selected="false">
-                👥 Участники
+              <button 
+                class="nav-link" 
+                id="participants-tab" 
+                data-bs-toggle="tab" 
+                data-bs-target="#participants-pane" 
+                type="button" 
+                role="tab" 
+                aria-controls="participants-pane" 
+                aria-selected="false"
+              >
+                <i class="bi bi-people me-1"></i>
+                Участники
               </button>
             </li>
           </ul>
         </div>
     
-        <!-- Tabs content -->
+        <!-- Tabs Content -->
         <div class="tab-content flex-grow-1" style="height: 430px; display: flex; flex-direction: column;">
           
-          <!-- Chat -->
-          <div class="tab-pane fade show active h-100 d-flex flex-column" id="chat-pane" role="tabpanel" aria-labelledby="chat-tab">
-            <div class="card-body chat-box flex-grow-1 overflow-auto p-3" id="chat-messages" style="display:flex; flex-direction:column; gap:8px;">
-              <!-- Сообщения сюда -->
+          <!-- Chat Tab -->
+          <div 
+            class="tab-pane fade show active h-100 d-flex flex-column" 
+            id="chat-pane" 
+            role="tabpanel" 
+            aria-labelledby="chat-tab"
+          >
+            <div 
+              class="card-body chat-box flex-grow-1 overflow-auto p-3" 
+              id="chat-messages" 
+              style="display:flex; flex-direction:column; gap:8px;"
+            >
+              <!-- Сообщения будут загружаться сюда -->
             </div>
             <div class="card-footer p-2">
-              <form id="chat-form" class="d-flex" autocomplete="off">
-                <input type="text" id="chat-input" class="form-control me-2" placeholder="Введите сообщение..." autocomplete="off">
-                <button class="btn btn-primary" type="submit">Отправить</button>
+              <form id="chat-form" class="d-flex gap-2" autocomplete="off">
+                <input 
+                  type="text" 
+                  id="chat-input" 
+                  class="form-control" 
+                  placeholder="Введите сообщение..." 
+                  autocomplete="off"
+                >
+                <button class="btn btn-primary" type="submit">
+                  <i class="bi bi-send-fill"></i>
+                </button>
               </form>
             </div>
           </div>
     
+          <!-- Playlist Tab -->
           {% if room.playlist %}
-          <div class="tab-pane fade h-100 overflow-auto p-3" id="playlist-pane" role="tabpanel" aria-labelledby="playlist-tab">
+          <div 
+            class="tab-pane fade h-100 overflow-auto p-3" 
+            id="playlist-pane" 
+            role="tabpanel" 
+            aria-labelledby="playlist-tab"
+          >
+            <!-- Current Episode Display -->
+            <div id="current-episode" class="mb-3 p-3 bg-light border rounded fw-bold">
+              <i class="bi bi-play-circle-fill me-2"></i>
+              Загрузка серии...
+            </div>
           
-            <!-- Место для вывода текущей серии -->
-            <div id="current-episode" class="mb-3 p-2 bg-light border rounded fw-bold">Загрузка серии...</div>
-          
+            <!-- Playlist Items -->
             {% for item in room.playlist.items.all %}
               <div
-                class="d-flex align-items-center mb-3 playlist-item border rounded p-2"
+                class="d-flex align-items-center mb-2 playlist-item border rounded p-2"
                 data-hls-url="{{ item.video.hls_manifest.url }}"
                 data-video-id="{{ item.video.id }}"
                 data-season="{{ item.season_number }}"
@@ -96,50 +193,49 @@
                 data-title="{{ item.video.title }}"
               >
                 {% if item.video.thumbnail %}
-                  <img src="{{ item.video.thumbnail.url }}" alt="" class="me-3 rounded" style="width:80px; height:45px; object-fit:cover;">
+                  <img 
+                    src="{{ item.video.thumbnail.url }}" 
+                    alt="Превью" 
+                    class="me-3 rounded" 
+                    style="width:80px; height:45px; object-fit:cover;"
+                  >
                 {% else %}
-                  <div class="bg-secondary me-3 rounded" style="width:80px; height:45px;"></div>
+                  <div 
+                    class="bg-secondary me-3 rounded d-flex align-items-center justify-content-center" 
+                    style="width:80px; height:45px;"
+                  >
+                    <i class="bi bi-film text-white"></i>
+                  </div>
                 {% endif %}
                 <div class="flex-grow-1">
-                  <div class="fw-bold text-truncate">Сезон {{ item.season_number }}, Серия {{ item.episode_number }}</div>
+                  <div class="fw-bold text-truncate">
+                    Сезон {{ item.season_number }}, Серия {{ item.episode_number }}
+                  </div>
                   <div class="text-muted small text-truncate">{{ item.video.title }}</div>
                 </div>
-                <div class="text-muted small ms-2">▶</div>
+                <div class="text-muted">
+                  <i class="bi bi-play-circle"></i>
+                </div>
               </div>
-              {% empty %}
-                <p class="text-muted">Плейлист пуст</p>
+            {% empty %}
+              <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                Плейлист пуст
+              </div>
             {% endfor %}
           </div>
           {% endif %}
-          
     
-          <!-- Participants -->
-          <div class="tab-pane fade h-100 overflow-auto p-3" id="participants-pane" role="tabpanel" aria-labelledby="participants-tab">
+          <!-- Participants Tab -->
+          <div 
+            class="tab-pane fade h-100 overflow-auto p-3" 
+            id="participants-pane" 
+            role="tabpanel" 
+            aria-labelledby="participants-tab"
+          >
             <ul id="participants-list" class="list-unstyled mb-0"></ul>
           </div>
         </div>
-      </div>
-    </div>
-
-    
-  
-      <div class="d-grid gap-2 mt-2">
-        {% if user.is_authenticated %}
-          {% if user in room.participants.all %}
-            <form method="post" action="{% url 'rooms:leave' room.pk %}">
-              {% csrf_token %}
-              <button class="btn btn-outline-danger btn-lg" type="submit">Отключиться</button>
-            </form>
-          {% else %}
-            <form method="post" action="{% url 'rooms:join' room.pk %}">
-              {% csrf_token %}
-              <button class="btn btn-primary btn-lg" type="submit">Подключиться</button>
-            </form>
-          {% endif %}
-        {% else %}
-          <a href="{% url 'login' %}" class="btn btn-secondary btn-lg">Войдите, чтобы подключиться</a>
-        {% endif %}
-        <a href="{% url 'rooms:list' %}" class="btn btn-light btn-lg">Назад к списку комнат</a>
       </div>
     </div>
   </div>
@@ -161,5 +257,4 @@
   <script src="{% static 'js/chat.js' %}"></script>
   <script src="{% static 'js/playlists.js' %}"></script>
   <script>window.currentUser = "{{ user.username }}";</script>
-
 {% endblock %}

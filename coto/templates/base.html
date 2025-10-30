@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" data-bs-theme="auto">
+<html lang="ru" data-bs-theme="light">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -10,28 +10,35 @@
     {% endblock %}
     </title>
 
-    
-
     {% load static %}
-    <script src="{% static 'js/bootstrap.bundle.js' %}" defer></script>
-    <script src="https://unpkg.com/htmx.org@1.9.0" defer></script>
-
+    
+    <!-- Bootstrap & Core CSS -->
     <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
     <link rel="stylesheet" href="{% static 'css/bootstrap-icons.css' %}">
+    
+    <!-- Custom Theme CSS -->
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
     <link rel="stylesheet" href="{% static 'css/footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/coto_theme.css' %}">
-    {% comment %} <link rel="icon" type="image/png" href={% static "favicons/favicon-96x96.png" %} sizes="96x96">
+    
+    <!-- Scripts -->
+    <script src="{% static 'js/theme.js' %}"></script>
+    <script src="{% static 'js/bootstrap.bundle.js' %}" defer></script>
+    <script src="https://unpkg.com/htmx.org@1.9.0" defer></script>
+    
+    {% comment %} 
+    <link rel="icon" type="image/png" href={% static "favicons/favicon-96x96.png" %} sizes="96x96">
     <link rel="icon" type="image/svg+xml" href={% static "favicons/favicon.svg" %}>
     <link rel="shortcut icon" href={% static "favicons/favicon.ico" %}>
     <link rel="apple-touch-icon" sizes="180x180" href={% static "favicons/apple-touch-icon.png" %}>
     <meta name="apple-mobile-web-app-title" content="coto">
-    <link rel="manifest" href={% static "favicons/site.webmanifest" %}> {% endcomment %}
+    <link rel="manifest" href={% static "favicons/site.webmanifest" %}> 
+    {% endcomment %}
   </head>
   <body class="wrapper">
     
     {% include "includes/header.html" %}
     
-
     <main>
       {% block content %}
       <div class="d-flex justify-content-center">
@@ -40,7 +47,6 @@
       {% endblock %}
     </main>
 
-    
     {% include "includes/footer.html" %}
     
     {% block extra_js %}{% endblock %}
