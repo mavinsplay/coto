@@ -1,536 +1,537 @@
 /* ==========================================================================
-   THEME SYSTEM - Light & Dark Modes
-   ========================================================================== */
+  THEME SYSTEM - Light & Dark Modes
+  ========================================================================== */
 
-   :root {
-    /* Light Theme Colors */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --bg-tertiary: #e9ecef;
-    --bg-card: #ffffff;
-    --bg-hover: #f1f3f5;
-    
-    --text-primary: #212529;
-    --text-secondary: #6c757d;
-    --text-muted: #adb5bd;
-    
-    --border-color: #dee2e6;
-    --border-subtle: #e9ecef;
-    
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-    
-    --accent-primary: #0d6efd;
-    --accent-primary-hover: #0b5ed7;
-    --accent-success: #198754;
-    --accent-danger: #dc3545;
-    --accent-warning: #ffc107;
-    
-    /* Transitions */
-    --transition-theme: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+:root {
+  /* Light Theme Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f3f5;
+  
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-muted: #adb5bd;
+  
+  --border-color: #dee2e6;
+  --border-subtle: #e9ecef;
+  
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  
+  --accent-primary: #0d6efd;
+  --accent-primary-hover: #0b5ed7;
+  --accent-success: #198754;
+  --accent-danger: #dc3545;
+  --accent-warning: #ffc107;
+  
+  /* Transitions */
+  --transition-theme: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-bs-theme="dark"] {
+  /* Dark Theme Colors - Более тёмные */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #151515;
+  --bg-card: #0d0d0d;
+  --bg-hover: #1a1a1a;
+  
+  --text-primary: #e8e8e8;
+  --text-secondary: #a0a0a0;
+  --text-muted: #707070;
+  
+  --border-color: #2a2a2a;
+  --border-subtle: #1a1a1a;
+  
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
+  
+  --accent-primary: #3d8bfd;
+  --accent-primary-hover: #2678ec;
+  --accent-success: #26a641;
+  --accent-danger: #f85149;
+  --accent-warning: #d29922;
+}
+
+/* ==========================================================================
+    BASE STYLES - Предотвращение мигания
+    ========================================================================== */
+
+html {
+  /* Предотвращаем мигание при загрузке */
+  background-color: var(--bg-primary);
+  transition: none !important;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: var(--transition-theme);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  min-height: 100vh;
+}
+
+/* Отключаем переходы при загрузке страницы */
+body.loading * {
+  transition: none !important;
+}
+
+/* ==========================================================================
+    NAVBAR & HEADER
+    ========================================================================== */
+
+.navbar {
+  background-color: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border-color);
+  transition: var(--transition-theme);
+  box-shadow: var(--shadow-sm);
+}
+
+.navbar-brand {
+  color: var(--text-primary) !important;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.offcanvas {
+  background-color: var(--bg-card);
+  border-left: 1px solid var(--border-color);
+  transition: var(--transition-theme);
+}
+
+.offcanvas-header {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.offcanvas-title {
+  color: var(--text-primary);
+}
+
+.nav-link {
+  color: var(--text-secondary) !important;
+  transition: var(--transition-theme);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.nav-link:hover {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-hover);
+}
+
+.nav-link.active {
+  color: var(--accent-primary) !important;
+  background-color: var(--bg-tertiary);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  margin-left: 20px;
+  margin-right: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-theme), transform 0.2s ease;
+  margin-left: 0.5rem;
+}
+
+.theme-toggle:hover {
+  background-color: var(--bg-hover);
+  transform: scale(1.05);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle i {
+  font-size: 1.2rem;
+}
+
+/* ==========================================================================
+    CARDS
+    ========================================================================== */
+
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  transition: var(--transition-theme), transform 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.card-body {
+  color: var(--text-primary);
+}
+
+.card-footer {
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.card-title {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.card-text {
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+    BUTTONS
+    ========================================================================== */
+
+.btn-primary {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-primary-hover);
+  border-color: var(--accent-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-success {
+  background-color: var(--accent-success);
+  border-color: var(--accent-success);
+}
+
+.btn-danger {
+  background-color: var(--accent-danger);
+  border-color: var(--accent-danger);
+}
+
+.btn-light {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-light:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.btn-secondary {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.btn-outline-danger {
+  color: var(--accent-danger);
+  border-color: var(--accent-danger);
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--accent-danger);
+  color: white;
+}
+
+/* ==========================================================================
+    FORMS
+    ========================================================================== */
+
+.form-control {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  transition: var(--transition-theme);
+}
+
+.form-control:focus {
+  background-color: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+    CHAT STYLES
+    ========================================================================== */
+
+.chat-box {
+  background-color: var(--bg-secondary) !important;
+}
+
+.chat-message {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  transition: var(--transition-theme);
+}
+
+.chat-message:hover {
+  background-color: var(--bg-hover);
+}
+
+/* ==========================================================================
+    TABS
+    ========================================================================== */
+
+.nav-tabs {
+  background-color: var(--bg-secondary);
+}
+
+.nav-tabs .nav-link {
+  color: var(--text-secondary);
+  border: none;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  margin-bottom: 0;
+  background-color: transparent;
+}
+
+.nav-tabs .nav-link:hover {
+  border-bottom-color: var(--border-color);
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--accent-primary);
+  background-color: var(--bg-primary);
+  border-bottom-color: var(--accent-primary);
+}
+
+.tab-content {
+  background-color: var(--bg-primary);
+}
+
+.tab-pane {
+  background-color: var(--bg-primary);
+}
+
+/* ==========================================================================
+    PLAYLIST
+    ========================================================================== */
+
+.playlist-item {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color) !important;
+  transition: var(--transition-theme), transform 0.2s ease;
+  cursor: pointer;
+}
+
+.playlist-item:hover {
+  background-color: var(--bg-hover);
+  transform: translateX(4px);
+  border-color: var(--accent-primary) !important;
+}
+
+#current-episode {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--accent-primary) !important;
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+    UTILITIES
+    ========================================================================== */
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.bg-light {
+  background-color: var(--bg-secondary) !important;
+}
+
+.bg-secondary {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.border {
+  border-color: var(--border-color) !important;
+}
+
+.shadow-sm {
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.shadow {
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* ==========================================================================
+    DROPDOWN
+    ========================================================================== */
+
+.dropdown-menu {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item {
+  color: var(--text-primary);
+  transition: var(--transition-theme);
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.dropdown-divider {
+  border-color: var(--border-color);
+}
+
+/* ==========================================================================
+    ALERTS
+    ========================================================================== */
+
+.alert-warning {
+  background-color: var(--bg-tertiary);
+  border-color: var(--accent-warning);
+  color: var(--text-primary);
+}
+
+.alert-info {
+  background-color: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+    PAGINATION
+    ========================================================================== */
+
+.page-link {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.page-link:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.page-item.disabled .page-link {
+  background-color: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+    VIDEO PLAYER
+    ========================================================================== */
+
+.video-wrapper {
+  background-color: #000000;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+    SCROLLBAR
+    ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ==========================================================================
+    ANIMATIONS
+    ========================================================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  
-  [data-bs-theme="dark"] {
-    /* Dark Theme Colors - Более тёмные */
-    --bg-primary: #000000;
-    --bg-secondary: #0a0a0a;
-    --bg-tertiary: #151515;
-    --bg-card: #0d0d0d;
-    --bg-hover: #1a1a1a;
-    
-    --text-primary: #e8e8e8;
-    --text-secondary: #a0a0a0;
-    --text-muted: #707070;
-    
-    --border-color: #2a2a2a;
-    --border-subtle: #1a1a1a;
-    
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
-    
-    --accent-primary: #3d8bfd;
-    --accent-primary-hover: #2678ec;
-    --accent-success: #26a641;
-    --accent-danger: #f85149;
-    --accent-warning: #d29922;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  /* ==========================================================================
-     BASE STYLES - Предотвращение мигания
-     ========================================================================== */
-  
-  html {
-    /* Предотвращаем мигание при загрузке */
-    background-color: var(--bg-primary);
-    transition: none !important;
-  }
-  
-  body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    transition: var(--transition-theme);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    min-height: 100vh;
-  }
-  
-  /* Отключаем переходы при загрузке страницы */
-  body.loading * {
-    transition: none !important;
-  }
-  
-  /* ==========================================================================
-     NAVBAR & HEADER
-     ========================================================================== */
-  
-  .navbar {
-    background-color: var(--bg-card) !important;
-    border-bottom: 1px solid var(--border-color);
-    transition: var(--transition-theme);
-    box-shadow: var(--shadow-sm);
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+/* ==========================================================================
+    RESPONSIVE
+    ========================================================================== */
+
+@media (max-width: 768px) {
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
   }
   
   .navbar-brand {
-    color: var(--text-primary) !important;
-    font-weight: 700;
-    font-size: 1.5rem;
-    letter-spacing: -0.02em;
-  }
-  
-  .offcanvas {
-    background-color: var(--bg-card);
-    border-left: 1px solid var(--border-color);
-    transition: var(--transition-theme);
-  }
-  
-  .offcanvas-header {
-    border-bottom: 1px solid var(--border-color);
-  }
-  
-  .offcanvas-title {
-    color: var(--text-primary);
-  }
-  
-  .nav-link {
-    color: var(--text-secondary) !important;
-    transition: var(--transition-theme);
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    margin-bottom: 0.25rem;
-  }
-  
-  .nav-link:hover {
-    color: var(--text-primary) !important;
-    background-color: var(--bg-hover);
-  }
-  
-  .nav-link.active {
-    color: var(--accent-primary) !important;
-    background-color: var(--bg-tertiary);
-  }
-  
-  /* Theme Toggle Button */
-  .theme-toggle {
-    width: 40px;
-    height: 40px;
-    margin-left: 20px;
-    margin-right: 20px;
-    border-radius: 50%;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: var(--transition-theme), transform 0.2s ease;
-    margin-left: 0.5rem;
-  }
-  
-  .theme-toggle:hover {
-    background-color: var(--bg-hover);
-    transform: scale(1.05);
-  }
-  
-  .theme-toggle:active {
-    transform: scale(0.95);
-  }
-  
-  .theme-toggle i {
-    font-size: 1.2rem;
-  }
-  
-  /* ==========================================================================
-     CARDS
-     ========================================================================== */
-  
-  .card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 0.75rem;
-    transition: var(--transition-theme), transform 0.2s ease;
-    box-shadow: var(--shadow-sm);
-  }
-  
-  .card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-  }
-  
-  .card-header {
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-primary);
-  }
-  
-  .card-body {
-    color: var(--text-primary);
-  }
-  
-  .card-footer {
-    background-color: var(--bg-secondary);
-    border-top: 1px solid var(--border-color);
-  }
-  
-  .card-title {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-  
-  .card-text {
-    color: var(--text-secondary);
-  }
-  
-  /* ==========================================================================
-     BUTTONS
-     ========================================================================== */
-  
-  .btn-primary {
-    background-color: var(--accent-primary);
-    border-color: var(--accent-primary);
-    color: white;
-    transition: all 0.2s ease;
-  }
-  
-  .btn-primary:hover {
-    background-color: var(--accent-primary-hover);
-    border-color: var(--accent-primary-hover);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-  }
-  
-  .btn-success {
-    background-color: var(--accent-success);
-    border-color: var(--accent-success);
-  }
-  
-  .btn-danger {
-    background-color: var(--accent-danger);
-    border-color: var(--accent-danger);
-  }
-  
-  .btn-light {
-    background-color: var(--bg-secondary);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-  }
-  
-  .btn-light:hover {
-    background-color: var(--bg-hover);
-    color: var(--text-primary);
-  }
-  
-  .btn-secondary {
-    background-color: var(--bg-tertiary);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-  }
-  
-  .btn-outline-danger {
-    color: var(--accent-danger);
-    border-color: var(--accent-danger);
-  }
-  
-  .btn-outline-danger:hover {
-    background-color: var(--accent-danger);
-    color: white;
-  }
-  
-  /* ==========================================================================
-     FORMS
-     ========================================================================== */
-  
-  .form-control {
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    transition: var(--transition-theme);
-  }
-  
-  .form-control:focus {
-    background-color: var(--bg-secondary);
-    border-color: var(--accent-primary);
-    color: var(--text-primary);
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-  }
-  
-  .form-control::placeholder {
-    color: var(--text-muted);
-  }
-  
-  /* ==========================================================================
-     CHAT STYLES
-     ========================================================================== */
-  
-  .chat-box {
-    background-color: var(--bg-secondary) !important;
-  }
-  
-  .chat-message {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    transition: var(--transition-theme);
-  }
-  
-  .chat-message:hover {
-    background-color: var(--bg-hover);
-  }
-  
-  /* ==========================================================================
-     TABS
-     ========================================================================== */
-  
-  .nav-tabs {
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--bg-secondary);
-  }
-  
-  .nav-tabs .nav-link {
-    color: var(--text-secondary);
-    border: none;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-    margin-bottom: 0;
-    background-color: transparent;
-  }
-  
-  .nav-tabs .nav-link:hover {
-    border-bottom-color: var(--border-color);
-    background-color: var(--bg-hover);
-    color: var(--text-primary);
-  }
-  
-  .nav-tabs .nav-link.active {
-    color: var(--accent-primary);
-    background-color: var(--bg-primary);
-    border-bottom-color: var(--accent-primary);
-  }
-  
-  .tab-content {
-    background-color: var(--bg-primary);
-  }
-  
-  .tab-pane {
-    background-color: var(--bg-primary);
-  }
-  
-  /* ==========================================================================
-     PLAYLIST
-     ========================================================================== */
-  
-  .playlist-item {
-    background-color: var(--bg-secondary);
-    border-color: var(--border-color) !important;
-    transition: var(--transition-theme), transform 0.2s ease;
-    cursor: pointer;
-  }
-  
-  .playlist-item:hover {
-    background-color: var(--bg-hover);
-    transform: translateX(4px);
-    border-color: var(--accent-primary) !important;
-  }
-  
-  #current-episode {
-    background-color: var(--bg-tertiary) !important;
-    border-color: var(--accent-primary) !important;
-    color: var(--text-primary);
-  }
-  
-  /* ==========================================================================
-     UTILITIES
-     ========================================================================== */
-  
-  .text-muted {
-    color: var(--text-muted) !important;
-  }
-  
-  .bg-light {
-    background-color: var(--bg-secondary) !important;
-  }
-  
-  .bg-secondary {
-    background-color: var(--bg-tertiary) !important;
-  }
-  
-  .border {
-    border-color: var(--border-color) !important;
-  }
-  
-  .shadow-sm {
-    box-shadow: var(--shadow-sm) !important;
-  }
-  
-  .shadow {
-    box-shadow: var(--shadow-md) !important;
-  }
-  
-  /* ==========================================================================
-     DROPDOWN
-     ========================================================================== */
-  
-  .dropdown-menu {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-lg);
-  }
-  
-  .dropdown-item {
-    color: var(--text-primary);
-    transition: var(--transition-theme);
-  }
-  
-  .dropdown-item:hover {
-    background-color: var(--bg-hover);
-    color: var(--text-primary);
-  }
-  
-  .dropdown-divider {
-    border-color: var(--border-color);
-  }
-  
-  /* ==========================================================================
-     ALERTS
-     ========================================================================== */
-  
-  .alert-warning {
-    background-color: var(--bg-tertiary);
-    border-color: var(--accent-warning);
-    color: var(--text-primary);
-  }
-  
-  .alert-info {
-    background-color: var(--bg-tertiary);
-    border-color: var(--accent-primary);
-    color: var(--text-primary);
-  }
-  
-  /* ==========================================================================
-     PAGINATION
-     ========================================================================== */
-  
-  .page-link {
-    background-color: var(--bg-card);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-  }
-  
-  .page-link:hover {
-    background-color: var(--bg-hover);
-    color: var(--text-primary);
-  }
-  
-  .page-item.disabled .page-link {
-    background-color: var(--bg-secondary);
-    color: var(--text-muted);
-  }
-  
-  /* ==========================================================================
-     VIDEO PLAYER
-     ========================================================================== */
-  
-  .video-wrapper {
-    background-color: #000000;
-    border-radius: 0.5rem;
-    overflow: hidden;
-  }
-  
-  /* ==========================================================================
-     SCROLLBAR
-     ========================================================================== */
-  
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 5px;
-  }
-  
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
-  }
-  
-  /* ==========================================================================
-     ANIMATIONS
-     ========================================================================== */
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .fade-in {
-    animation: fadeIn 0.3s ease;
-  }
-  
-  /* ==========================================================================
-     RESPONSIVE
-     ========================================================================== */
-  
-  @media (max-width: 768px) {
-    .theme-toggle {
-      width: 36px;
-      height: 36px;
-    }
-    
-    .navbar-brand {
-      font-size: 1.25rem;
-    }
-  }
-  #chat-messages {
-    border-bottom: 1px solid var(--bg-secondary) !important;
-  }
-  
-  .tab-content {
-    border: 1px solid var(--bg-secondary) !important;
-  }
-  
-  #chat-form {
-    background-color: var(--bg-secondary)!important;
-    border-top: 1px solid var(--bg-secondary) !important;
-  }
-  
-  .chat-box,
-  .chat-message {
-    var(--bg-secondary) !important;
-  }
-  .tab-pane {
-    background: var(--bg-secondary) !important;
-  }
+    font-size: 1.25rem;
+  }
+}
+#chat-messages {
+  border-bottom: 1px solid var(--bg-secondary) !important;
+}
+
+.tab-content {
+  border: 1px solid var(--bg-secondary) !important;
+}
+
+#chat-form {
+  background-color: var(--bg-secondary) !important;
+  border-top: 1px solid var(--bg-secondary) !important;
+}
+.tab-pane {
+  background: var(--bg-secondary) !important;
+}
+div.profile-dropdown {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  border-radius: 6px;
+  margin-top: auto;
+}

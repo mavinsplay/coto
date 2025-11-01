@@ -137,10 +137,10 @@
     background-color: #0d6efd;
     color: white;
     border-color: #0a58ca;
-  }
-  .playlist-item.active .text-muted {
+}
+.playlist-item.active .text-muted {
     color: rgba(255,255,255,0.85);
-  }
+}
   
   
   
