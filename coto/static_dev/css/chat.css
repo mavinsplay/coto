@@ -10,7 +10,7 @@
 }
 
 .chat-message.self {
-    background-color: #007bff;
+    background-color: var(--accent-primary-hover);
     color: white;
     align-self: flex-end;
     text-align: right;
@@ -134,9 +134,9 @@
 }
 
 .playlist-item.active {
-    background-color: #0d6efd;
+    background-color: var(--accent-primary-hover);
     color: white;
-    border-color: #0a58ca;
+    border-color: var(--accent-primary);
 }
 .playlist-item.active .text-muted {
     color: rgba(255,255,255,0.85);
