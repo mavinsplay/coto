@@ -3,9 +3,1115 @@
 {% load static %}
 
 {% block title %}
-  {{ title }}
+  Coto - Смотрите вместе, где бы вы ни были
 {% endblock title %}
 
 {% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-background">
+    <div class="floating-hearts">
+      <div class="heart"></div>
+      <div class="heart"></div>
+      <div class="heart"></div>
+      <div class="heart"></div>
+      <div class="heart"></div>
+      <div class="heart"></div>
+    </div>
+  </div>
   
+  <div class="container">
+    <div class="row align-items-center min-vh-100 py-5">
+      <div class="col-lg-6 hero-content">
+        <div class="hero-badge mb-4">
+          <i class="bi bi-stars"></i>
+          <span>Смотрите вместе с любимыми</span>
+        </div>
+        
+        <h1 class="hero-title mb-4">
+          Сокращая<br>
+          <span class="gradient-text">расстояния</span><br>
+          один фильм за раз
+        </h1>
+        
+        <p class="hero-description mb-5">
+          Создавайте комнаты для совместного просмотра, общайтесь в реальном времени 
+          и делитесь эмоциями, даже находясь на расстоянии. Потому что близость — 
+          это не километры, а моменты, проведенные вместе.
+        </p>
+        
+        <div class="hero-buttons d-flex flex-wrap gap-3">
+          <a href="{% url 'rooms:list' %}" class="btn btn-primary btn-lg btn-hero">
+            <i class="bi bi-door-open me-2"></i>
+            Начать просмотр
+            <i class="bi bi-arrow-right ms-2"></i>
+          </a>
+          <a href="#features" class="btn btn-outline-secondary btn-lg btn-hero-secondary">
+            <i class="bi bi-info-circle me-2"></i>
+            Узнать больше
+          </a>
+        </div>
+        
+        <div class="hero-stats mt-5">
+          <div class="stat-item">
+            <div class="stat-number">
+              <i class="bi bi-heart-fill text-danger"></i>
+              <span class="counter" data-target="1000">0</span>+
+            </div>
+            <div class="stat-label">Совместных просмотров</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">
+              <i class="bi bi-clock-fill text-success"></i>
+              <span class="counter" data-target="10000">0</span>+
+            </div>
+            <div class="stat-label">Часов вместе</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-6 hero-image">
+        <div class="hero-card">
+          <div class="movie-preview">
+            <div class="movie-screen">
+              <i class="bi bi-film"></i>
+              <div class="play-button">
+                <i class="bi bi-play-fill"></i>
+              </div>
+            </div>
+            <div class="viewer-avatars">
+              <div class="avatar avatar-1">
+                <i class="bi bi-person-heart"></i>
+              </div>
+              <div class="avatar avatar-2">
+                <i class="bi bi-person-heart"></i>
+              </div>
+              <div class="connection-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features-section py-5">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <h2 class="section-title">Почему выбирают Coto?</h2>
+      <p class="section-subtitle">Всё, что нужно для идеального совместного просмотра</p>
+    </div>
+    
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-broadcast"></i>
+          </div>
+          <h3 class="feature-title">Синхронный просмотр</h3>
+          <p class="feature-description">
+            Идеальная синхронизация видео для всех участников комнаты. 
+            Смотрите одновременно, создавая уют, как будто сидите рядом.
+          </p>
+        </div>
+      </div>
+      
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-chat-heart"></i>
+          </div>
+          <h3 class="feature-title">Живое общение</h3>
+          <p class="feature-description">
+            Делитесь эмоциями в режиме реального времени через встроенный чат. 
+            Обсуждайте моменты прямо во время просмотра.
+          </p>
+        </div>
+      </div>
+      
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <h3 class="feature-title">Приватность</h3>
+          <p class="feature-description">
+            Создавайте закрытые комнаты только для ваших близких. 
+            Полный контроль над участниками и содержимым.
+            Ваша приватность - наша забота.
+          </p>
+        </div>
+      </div>
+      
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-collection-play"></i>
+          </div>
+          <h3 class="feature-title">Плейлисты</h3>
+          <p class="feature-description">
+            Создавайте плейлисты для марафонов любимых сериалов. 
+            Загрузите сразу весь сериал и наслаждайтесь просмотром без перерывов.
+          </p>
+        </div>
+      </div>
+      
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-phone"></i>
+          </div>
+          <h3 class="feature-title">Любые устройства</h3>
+          <p class="feature-description">
+            Смотрите с компьютера, планшета или телефона.
+            Не важно где, главное с кем. 
+          </p>
+        </div>
+      </div>
+      
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="bi bi-lightning"></i>
+          </div>
+          <h3 class="feature-title">Мгновенный старт</h3>
+          <p class="feature-description">
+            Не нужно ничего устанавливать. Просто создайте комнату 
+            и пригласите друзей одной ссылкой.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works-section py-5">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <h2 class="section-title">Как это работает?</h2>
+      <p class="section-subtitle">Три простых шага до совместного просмотра</p>
+    </div>
+    
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-icon">
+            <i class="bi bi-cloud-upload"></i>
+          </div>
+          <h3 class="step-title">Загрузите видео</h3>
+          <p class="step-description">
+            Загрузите свой любимый фильм или сериал на платформу
+          </p>
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-icon">
+            <i class="bi bi-plus-circle"></i>
+          </div>
+          <h3 class="step-title">Создайте комнату</h3>
+          <p class="step-description">
+            Создайте комнату и пригласите своих близких
+          </p>
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-icon">
+            <i class="bi bi-play-circle"></i>
+          </div>
+          <h3 class="step-title">Наслаждайтесь вместе</h3>
+          <p class="step-description">
+            Смотрите синхронно и делитесь эмоциями в чате!
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5">
+  <div class="container">
+    <div class="cta-card">
+      <div class="cta-content text-center">
+        <div class="cta-icon mb-4">
+          <i class="bi bi-heart-pulse"></i>
+        </div>
+        <h2 class="cta-title mb-3">Готовы начать?</h2>
+        <p class="cta-description mb-4">
+          Присоединяйтесь к тем, которые уже смотрят вместе на Coto.<br>
+          Создайте свою первую комнату прямо сейчас — это бесплатно!
+        </p>
+        <a href="{% url 'rooms:list' %}" class="btn btn-light btn-lg btn-cta">
+          <i class="bi bi-rocket-takeoff me-2"></i>
+          Создать комнату
+          <i class="bi bi-arrow-right ms-2"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Creators Section -->
+<section class="creators-section py-5">
+  <div class="container">
+    <div class="creators-card">
+      <div class="row align-items-center">
+        <div class="col-lg-6 text-center mb-4 mb-lg-0">
+          <div class="creators-illustration">
+            <div class="creator-avatar left-avatar">
+              <i class="bi bi-person-heart"></i>
+              <div class="avatar-name">Аня</div>
+            </div>
+            <div class="love-symbol">
+              <i class="bi bi-heart-fill"></i>
+            </div>
+            <div class="creator-avatar right-avatar">
+              <i class="bi bi-person-heart"></i>
+              <div class="avatar-name">Максим</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="creators-content">
+            <h3 class="creators-title mb-3">Создано с любовью</h3>
+            <p class="creators-description">
+              Coto родился из желания быть ближе друг к другу, несмотря на расстояние. 
+            </p>
+            <p class="creators-description mb-0">
+              Этот проект — наш подарок, для тех, кто хоче быть рядом и создать уют даже на расстоянии.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+/* Hero Section */
+.hero-section {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+}
+
+.hero-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  opacity: 0.3;
+}
+
+.floating-hearts {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.heart {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%);
+  transform: rotate(-45deg);
+  animation: float 15s infinite ease-in-out;
+  opacity: 0.6;
+}
+
+.heart::before,
+.heart::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%);
+  border-radius: 50%;
+}
+
+.heart::before {
+  top: -10px;
+  left: 0;
+}
+
+.heart::after {
+  top: 0;
+  left: 10px;
+}
+
+.heart:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 12s; }
+.heart:nth-child(2) { left: 30%; animation-delay: 2s; animation-duration: 14s; }
+.heart:nth-child(3) { left: 50%; animation-delay: 4s; animation-duration: 16s; }
+.heart:nth-child(4) { left: 70%; animation-delay: 6s; animation-duration: 13s; }
+.heart:nth-child(5) { left: 85%; animation-delay: 8s; animation-duration: 15s; }
+.heart:nth-child(6) { left: 20%; animation-delay: 10s; animation-duration: 17s; }
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(100vh) rotate(-45deg) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-100px) rotate(-45deg) scale(1);
+    opacity: 0;
+  }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  animation: fadeInUp 0.8s ease;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(192, 108, 132, 0.1));
+  border: 1px solid rgba(255, 107, 157, 0.3);
+  border-radius: 2rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 50%, #ff6b9d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 3s ease infinite;
+  background-size: 200% auto;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.hero-description {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  max-width: 540px;
+}
+
+.btn-hero {
+  padding: 1rem 2rem;
+  font-weight: 600;
+  border-radius: 3rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
+}
+
+.btn-hero:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(13, 110, 253, 0.4);
+}
+
+.btn-hero-secondary {
+  border: 2px solid var(--border-color);
+  box-shadow: none;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  text-align: left;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* Hero Image */
+.hero-image {
+  position: relative;
+  animation: fadeInRight 1s ease;
+}
+
+.hero-card {
+  position: relative;
+  padding: 2rem;
+}
+
+.movie-preview {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.movie-screen {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 1rem;
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.movie-screen i {
+  font-size: 4rem;
+  color: white;
+  opacity: 0.3;
+}
+
+.play-button {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  animation: pulse 2s ease infinite;
+}
+
+.play-button i {
+  font-size: 2.5rem;
+  color: #667eea;
+  opacity: 1;
+  margin-left: 0.25rem;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.viewer-avatars {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4rem;
+  position: relative;
+}
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
+  animation: bounce 2s ease infinite;
+}
+
+.avatar-1 {
+  animation-delay: 0s;
+}
+
+.avatar-2 {
+  animation-delay: 0.5s;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.connection-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, #ff6b9d 0%, #c06c84 100%);
+  animation: lineGrow 2s ease infinite;
+}
+
+@keyframes lineGrow {
+  0%, 100% { width: 80px; opacity: 0.5; }
+  50% { width: 120px; opacity: 1; }
+}
+
+/* Features Section */
+.features-section {
+  background: var(--bg-secondary);
+}
+
+.section-header {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.section-subtitle {
+  font-size: 1.125rem;
+  color: var(--text-secondary);
+}
+
+.feature-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 2rem;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-primary);
+}
+
+.feature-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-hover));
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: white;
+  font-size: 1.75rem;
+}
+
+.feature-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.feature-description {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* How It Works */
+.how-it-works-section {
+  background: var(--bg-primary);
+}
+
+.step-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 2.5rem;
+  text-align: center;
+  height: 100%;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.step-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.step-number {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.step-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--bg-secondary);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem auto 1.5rem;
+  font-size: 2.5rem;
+  color: var(--accent-primary);
+}
+
+.step-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.step-description {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* CTA Section */
+.cta-section {
+  background: var(--bg-secondary);
+}
+
+.cta-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2rem;
+  padding: 4rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.cta-content {
+  position: relative;
+  z-index: 2;
+}
+
+.cta-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  color: white;
+  font-size: 2.5rem;
+  animation: heartbeat 1.5s ease infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+  50% { transform: scale(1); }
+}
+
+.cta-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+.cta-description {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 600px;
+  margin: 0 auto 2rem;
+}
+
+.btn-cta {
+  padding: 1rem 2.5rem;
+  font-weight: 600;
+  border-radius: 3rem;
+  transition: all 0.3s ease;
+}
+
+.btn-cta:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Creators Section */
+.creators-section {
+  background: var(--bg-primary);
+}
+
+.creators-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 2rem;
+  padding: 3rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.creators-illustration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  position: relative;
+}
+
+.creator-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 3rem;
+  box-shadow: 0 8px 30px rgba(255, 107, 157, 0.4);
+  animation: float-avatar 3s ease-in-out infinite;
+}
+
+.left-avatar {
+  animation-delay: 0s;
+}
+
+.right-avatar {
+  animation-delay: 1.5s;
+}
+
+@keyframes float-avatar {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+}
+
+.avatar-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.love-symbol {
+  font-size: 3rem;
+  color: #ff6b9d;
+  animation: heartbeat 1.5s ease infinite;
+}
+
+.creators-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.creators-description {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Counter Animation */
+.counter {
+  display: inline-block;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-stats {
+    gap: 2rem;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .viewer-avatars {
+    gap: 2rem;
+  }
+  
+  .connection-line {
+    width: 60px;
+  }
+  
+  @keyframes lineGrow {
+    0%, 100% { width: 50px; opacity: 0.5; }
+    50% { width: 80px; opacity: 1; }
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-description {
+    font-size: 1rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .hero-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn-hero,
+  .btn-hero-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .hero-stats {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .movie-screen {
+    height: 200px;
+  }
+  
+  .play-button {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .play-button i {
+    font-size: 2rem;
+  }
+  
+  .avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+  
+  .creator-avatar {
+    width: 100px;
+    height: 100px;
+    font-size: 2.5rem;
+  }
+  
+  .creators-illustration {
+    gap: 2rem;
+  }
+  
+  .love-symbol {
+    font-size: 2rem;
+  }
+  
+  .cta-card {
+    padding: 3rem 1.5rem;
+  }
+  
+  .cta-title {
+    font-size: 2rem;
+  }
+  
+  .cta-description {
+    font-size: 1rem;
+  }
+  
+  .creators-card {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .feature-card,
+  .step-card {
+    padding: 1.5rem;
+  }
+  
+  .feature-icon,
+  .step-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+  
+  .step-icon {
+    width: 70px;
+    height: 70px;
+    font-size: 2rem;
+  }
+}
+</style>
+
+<script>
+// Counter Animation
+document.addEventListener('DOMContentLoaded', function() {
+  const counters = document.querySelectorAll('.counter');
+  const speed = 200; // Animation speed
+  
+  const animateCounter = (counter) => {
+    const target = +counter.getAttribute('data-target');
+    const increment = target / speed;
+    
+    const updateCount = () => {
+      const count = +counter.innerText;
+      
+      if (count < target) {
+        counter.innerText = Math.ceil(count + increment);
+        setTimeout(updateCount, 10);
+      } else {
+        counter.innerText = target;
+      }
+    };
+    
+    updateCount();
+  };
+  
+  // Intersection Observer for counter animation
+  const observerOptions = {
+    threshold: 0.5,
+    rootMargin: '0px'
+  };
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const counter = entry.target;
+        if (counter.innerText === '0') {
+          animateCounter(counter);
+        }
+      }
+    });
+  }, observerOptions);
+  
+  counters.forEach(counter => {
+    observer.observe(counter);
+  });
+  
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+  
+  // Add fade-in animation on scroll
+  const fadeElements = document.querySelectorAll('.feature-card, .step-card');
+  
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry, index) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.style.opacity = '0';
+          entry.target.style.transform = 'translateY(20px)';
+          entry.target.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+          
+          setTimeout(() => {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }, 50);
+        }, index * 100);
+        
+        fadeObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  
+  fadeElements.forEach(el => {
+    fadeObserver.observe(el);
+  });
+});
+</script>
+
 {% endblock %}
