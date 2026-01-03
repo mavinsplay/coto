@@ -1398,10 +1398,41 @@
             }
         }
 
+        // Обработчик изменения названия в режиме single
+        const singleTitleInput = document.getElementById('single-title');
+        const singleDescriptionInput = document.getElementById('single-description');
+        
+        if (singleTitleInput) {
+            singleTitleInput.addEventListener('input', (e) => {
+                if (state.uploadMode === 'single' && state.files.length > 0) {
+                    state.files[0].title = e.target.value;
+                }
+            });
+        }
+        
+        if (singleDescriptionInput) {
+            singleDescriptionInput.addEventListener('input', (e) => {
+                if (state.uploadMode === 'single' && state.files.length > 0) {
+                    state.files[0].description = e.target.value;
+                }
+            });
+        }
+
         // Изменение файлов
         document.getElementById('single-file-input').addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 fileManager.addFiles(e.target.files);
+                // Автоматически применяем текущие значения title и description
+                if (state.uploadMode === 'single' && state.files.length > 0) {
+                    const title = singleTitleInput.value.trim();
+                    const description = singleDescriptionInput.value.trim();
+                    if (title) {
+                        state.files[0].title = title;
+                    }
+                    if (description) {
+                        state.files[0].description = description;
+                    }
+                }
             }
         });
 
