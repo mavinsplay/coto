@@ -140,25 +140,22 @@
                                 </div>
                             </div>
 
-                            <!-- Сезон и начальный эпизод -->
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <label for="season-number" class="form-label fw-bold">
-                                        <i class="bi bi-collection"></i> Сезон
-                                    </label>
-                                    <input type="number" class="form-control form-control-lg" 
-                                           id="season-number" 
-                                           value="1" 
-                                           min="1">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="start-episode" class="form-label fw-bold">
-                                        <i class="bi bi-play-circle"></i> Начальная серия
-                                    </label>
-                                    <input type="number" class="form-control form-control-lg" 
-                                           id="start-episode" 
-                                           value="1" 
-                                           min="1">
+                            <!-- Настройки серий -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-hash"></i> Настройки серий
+                                </label>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="season-number" class="form-label">Сезон</label>
+                                        <input type="number" class="form-control" id="season-number" value="1" min="1">
+                                        <small class="text-muted">Номер сезона для всех видео</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="start-episode" class="form-label">Начальная серия</label>
+                                        <input type="number" class="form-control" id="start-episode" value="1" min="1">
+                                        <small class="text-muted">Номер первой серии (остальные будут автоматически)</small>
+                                    </div>
                                 </div>
                             </div>
 
@@ -185,9 +182,14 @@
 
                         <!-- Список файлов для загрузки -->
                         <div id="files-list" class="mb-4" style="display: none;">
-                            <h5 class="mb-3">
-                                <i class="bi bi-list-check"></i> Файлы для загрузки
-                            </h5>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">
+                                    <i class="bi bi-list-check"></i> Файлы для загрузки
+                                </h5>
+                                <small class="text-muted">
+                                    <i class="bi bi-grip-vertical"></i> Перетаскивайте для изменения порядка
+                                </small>
+                            </div>
                             <div id="files-container"></div>
                         </div>
 

@@ -18,6 +18,8 @@
         uploadMode: 'single',
         files: [],
         uploads: new Map(),
+        existingVideos: [],  // Существующие видео в плейлисте
+        selectedPlaylistId: null,  // ID выбранного плейлиста
     };
 
     // Утилиты
@@ -32,6 +34,21 @@
 
         getCSRFToken() {
             return document.querySelector('[name=csrfmiddlewaretoken]').value;
+        },
+
+        getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
         },
 
         generateId() {
@@ -77,6 +94,83 @@
     };
 
     // Управление файлами
+    // Управление плейлистами
+    const playlistManager = {
+        async loadPlaylistVideos(playlistId) {
+            try {
+                const response = await fetch(`/upload/my/playlist/${playlistId}/videos/`, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': utils.getCookie('csrftoken'),
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки видео из плейлиста');
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    state.existingVideos = data.videos;
+                    fileManager.render();
+                    
+                    // Обновляем поля сезон/серия на основе последнего видео
+                    if (data.videos.length > 0) {
+                        const lastVideo = data.videos[data.videos.length - 1];
+                        const seasonInput = document.getElementById('season-number');
+                        const episodeInput = document.getElementById('start-episode');
+                        
+                        if (seasonInput) {
+                            seasonInput.value = lastVideo.season_number;
+                        }
+                        if (episodeInput) {
+                            episodeInput.value = lastVideo.episode_number + 1;
+                        }
+                    }
+                } else {
+                    console.error('Ошибка:', data.error);
+                    alert('Ошибка при загрузке видео: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке видео из плейлиста:', error);
+                alert('Не удалось загрузить видео из плейлиста');
+            }
+        },
+
+        async updateOrder(playlistId, items) {
+            try {
+                const response = await fetch('/upload/my/playlist/update-order/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': utils.getCookie('csrftoken'),
+                    },
+                    body: JSON.stringify({
+                        playlist_id: playlistId,
+                        items: items,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка обновления порядка');
+                }
+
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Неизвестная ошибка');
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Ошибка при обновлении порядка:', error);
+                alert('Не удалось обновить порядок видео: ' + error.message);
+                return false;
+            }
+        },
+    };
+
     const fileManager = {
         addFiles(files) {
             const validFiles = [];
@@ -104,6 +198,14 @@
                     status: 'pending',
                     progress: 0,
                     error: null,
+                    // Метаданные для плейлиста
+                    seasonNumber: null,
+                    episodeNumber: null,
+                    order: null,
+                    // Метаданные для видео
+                    title: file.name.replace(/\.[^/.]+$/, ''), // Название без расширения
+                    description: '',
+                    thumbnail: null, // Файл превью
                 });
             });
 
@@ -135,6 +237,22 @@
             }
         },
 
+        toggleMetadataEdit(fileId) {
+            const metadataDiv = document.getElementById(`metadata-${fileId}`);
+            if (metadataDiv) {
+                const isVisible = metadataDiv.style.display !== 'none';
+                metadataDiv.style.display = isVisible ? 'none' : 'block';
+            }
+        },
+
+        toggleExistingMetadata(videoId) {
+            const metadataDiv = document.getElementById(`metadata-existing-${videoId}`);
+            if (metadataDiv) {
+                const isVisible = metadataDiv.style.display !== 'none';
+                metadataDiv.style.display = isVisible ? 'none' : 'block';
+            }
+        },
+
         clearFiles() {
             state.files = [];
             this.render();
@@ -145,18 +263,136 @@
             const listSection = document.getElementById('files-list');
             const uploadBtn = document.getElementById('upload-btn');
 
-            if (state.files.length === 0) {
+            // Показываем секцию если есть файлы или существующие видео
+            const hasContent = state.files.length > 0 || state.existingVideos.length > 0;
+            
+            if (!hasContent) {
                 listSection.style.display = 'none';
                 uploadBtn.disabled = true;
                 return;
             }
 
             listSection.style.display = 'block';
-            uploadBtn.disabled = false;
+            uploadBtn.disabled = state.files.length === 0;
 
-            container.innerHTML = state.files.map(file => `
-                <div class="file-card" data-file-id="${file.id}">
+            // Автоматически присваиваем порядок и номера серий если в режиме плейлиста
+            if (state.uploadMode === 'playlist') {
+                const seasonInput = document.getElementById('season-number');
+                const episodeInput = document.getElementById('start-episode');
+                const seasonNumber = seasonInput ? (parseInt(seasonInput.value) || 1) : 1;
+                const startEpisode = episodeInput ? (parseInt(episodeInput.value) || 1) : 1;
+                
+                state.files.forEach((file, index) => {
+                    if (file.seasonNumber === null) file.seasonNumber = seasonNumber;
+                    if (file.episodeNumber === null) file.episodeNumber = startEpisode + index;
+                    if (file.order === null) file.order = (state.existingVideos.length + index + 1);
+                });
+            }
+
+            // Создаем HTML для существующих видео
+            const existingVideosHtml = state.existingVideos.map((video) => `
+                <div class="file-card existing-video" data-video-id="${video.id}" data-existing="true" draggable="true">
                     <div class="file-info">
+                        ${state.uploadMode === 'playlist' ? `
+                            <div class="drag-handle">
+                                <i class="bi bi-grip-vertical"></i>
+                            </div>
+                        ` : ''}
+                        <div class="file-icon">
+                            <i class="bi bi-camera-video-fill text-success"></i>
+                        </div>
+                        <div class="file-details">
+                            <div class="file-name" title="${video.title}">${video.title}</div>
+                            <div class="file-size">
+                                <span class="badge bg-success">Загружено</span>
+                                ${video.file_size ? utils.formatFileSize(video.file_size) : ''}
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button type="button" class="btn btn-sm btn-outline-primary me-2" 
+                                    onclick="fileManager.toggleExistingMetadata(${video.id})"
+                                    title="Редактировать метаданные">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <span class="text-muted small">ID: ${video.video_id}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Метаданные существующего видео -->
+                    <div class="video-metadata" id="metadata-existing-${video.id}" style="display: none;">
+                        <div class="metadata-fields">
+                            <div class="metadata-field">
+                                <label for="title-existing-${video.id}">Название видео</label>
+                                <input type="text" 
+                                       id="title-existing-${video.id}" 
+                                       class="form-control form-control-sm video-title-existing" 
+                                       value="${video.title || ''}" 
+                                       data-video-id="${video.id}"
+                                       placeholder="Название видео">
+                            </div>
+                            <div class="metadata-field">
+                                <label for="description-existing-${video.id}">Описание</label>
+                                <textarea id="description-existing-${video.id}" 
+                                          class="form-control form-control-sm video-description-existing" 
+                                          rows="2"
+                                          data-video-id="${video.id}"
+                                          placeholder="Описание видео">${video.description || ''}</textarea>
+                            </div>
+                            <div class="metadata-field">
+                                <label for="thumbnail-existing-${video.id}">Превью (изображение)</label>
+                                <input type="file" 
+                                       id="thumbnail-existing-${video.id}" 
+                                       class="form-control form-control-sm video-thumbnail-existing" 
+                                       accept="image/*"
+                                       data-video-id="${video.id}">
+                                <small class="text-muted">Загрузите новое превью</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${state.uploadMode === 'playlist' ? `
+                        <div class="episode-fields">
+                            <div class="episode-field">
+                                <label for="season-existing-${video.id}">Сезон</label>
+                                <input type="number" 
+                                       id="season-existing-${video.id}" 
+                                       class="episode-season-existing" 
+                                       value="${video.season_number}" 
+                                       min="1"
+                                       data-video-id="${video.id}">
+                            </div>
+                            <div class="episode-field">
+                                <label for="episode-existing-${video.id}">Серия</label>
+                                <input type="number" 
+                                       id="episode-existing-${video.id}" 
+                                       class="episode-number-existing" 
+                                       value="${video.episode_number}" 
+                                       min="1"
+                                       data-video-id="${video.id}">
+                            </div>
+                            <div class="episode-field">
+                                <label for="order-existing-${video.id}">Порядок</label>
+                                <input type="number" 
+                                       id="order-existing-${video.id}" 
+                                       class="episode-order-existing" 
+                                       value="${video.order}" 
+                                       min="1"
+                                       data-video-id="${video.id}">
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            // Создаем HTML для новых файлов
+            const newFilesHtml = state.files.map((file, index) => `
+                <div class="file-card" data-file-id="${file.id}" draggable="${file.status === 'pending'}">
+                    <div class="file-info">
+                        ${file.status === 'pending' && state.uploadMode === 'playlist' ? `
+                            <div class="drag-handle">
+                                <i class="bi bi-grip-vertical"></i>
+                            </div>
+                        ` : ''}
                         <div class="file-icon">
                             <i class="bi bi-file-earmark-play-fill"></i>
                         </div>
@@ -166,14 +402,406 @@
                         </div>
                         <div class="file-actions">
                             ${file.status === 'pending' ? `
+                                <button type="button" class="btn btn-sm btn-outline-primary me-2" 
+                                        onclick="fileManager.toggleMetadataEdit('${file.id}')"
+                                        title="Редактировать метаданные">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
                                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="fileManager.removeFile('${file.id}')">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             ` : ''}
                         </div>
                     </div>
+                    
+                    <!-- Метаданные видео -->
+                    <div class="video-metadata" id="metadata-${file.id}" style="display: none;">
+                        <div class="metadata-fields">
+                            <div class="metadata-field">
+                                <label for="title-${file.id}">Название видео</label>
+                                <input type="text" 
+                                       id="title-${file.id}" 
+                                       class="form-control form-control-sm video-title" 
+                                       value="${file.title || ''}" 
+                                       data-file-id="${file.id}"
+                                       placeholder="Название видео">
+                            </div>
+                            <div class="metadata-field">
+                                <label for="description-${file.id}">Описание</label>
+                                <textarea id="description-${file.id}" 
+                                          class="form-control form-control-sm video-description" 
+                                          rows="2"
+                                          data-file-id="${file.id}"
+                                          placeholder="Описание видео">${file.description || ''}</textarea>
+                            </div>
+                            <div class="metadata-field">
+                                <label for="thumbnail-${file.id}">Превью</label>
+                                <input type="file" 
+                                       id="thumbnail-${file.id}" 
+                                       class="form-control form-control-sm video-thumbnail" 
+                                       accept="image/*"
+                                       data-file-id="${file.id}">
+                                ${file.thumbnail ? `<small class="text-success">✓ Превью выбрано</small>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${state.uploadMode === 'playlist' && file.status === 'pending' ? `
+                        <div class="episode-fields">
+                            <div class="episode-field">
+                                <label for="season-${file.id}">Сезон</label>
+                                <input type="number" 
+                                       id="season-${file.id}" 
+                                       class="episode-season" 
+                                       value="${file.seasonNumber || 1}" 
+                                       min="1"
+                                       data-file-id="${file.id}">
+                            </div>
+                            <div class="episode-field">
+                                <label for="episode-${file.id}">Серия</label>
+                                <input type="number" 
+                                       id="episode-${file.id}" 
+                                       class="episode-number" 
+                                       value="${file.episodeNumber || 1}" 
+                                       min="1"
+                                       data-file-id="${file.id}">
+                            </div>
+                            <div class="episode-field">
+                                <label for="order-${file.id}">Порядок</label>
+                                <input type="number" 
+                                       id="order-${file.id}" 
+                                       class="episode-order" 
+                                       value="${file.order || (index + 1)}" 
+                                       min="1"
+                                       data-file-id="${file.id}">
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
             `).join('');
+            
+            // Объединяем существующие видео и новые файлы
+            container.innerHTML = existingVideosHtml + newFilesHtml;
+            
+            // Добавляем обработчики для изменения полей
+            this.attachFieldHandlers();
+            
+            // Добавляем обработчики drag-and-drop
+            if (state.uploadMode === 'playlist') {
+                this.attachDragHandlers();
+            }
+        },
+
+        attachFieldHandlers() {
+            // Обработчики для метаданных видео (название, описание, превью)
+            document.querySelectorAll('.video-title, .video-description').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const fileId = e.target.dataset.fileId;
+                    const file = state.files.find(f => f.id === fileId);
+                    if (file) {
+                        if (e.target.classList.contains('video-title')) {
+                            file.title = e.target.value;
+                        } else if (e.target.classList.contains('video-description')) {
+                            file.description = e.target.value;
+                        }
+                    }
+                });
+            });
+
+            // Обработчики для превью
+            document.querySelectorAll('.video-thumbnail').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const fileId = e.target.dataset.fileId;
+                    const file = state.files.find(f => f.id === fileId);
+                    if (file && e.target.files.length > 0) {
+                        file.thumbnail = e.target.files[0];
+                        this.render();
+                    }
+                });
+            });
+
+            // Обработчики для полей сезон/серия/порядок новых файлов
+            document.querySelectorAll('.episode-season, .episode-number, .episode-order').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const fileId = e.target.dataset.fileId;
+                    const file = state.files.find(f => f.id === fileId);
+                    if (file) {
+                        if (e.target.classList.contains('episode-season')) {
+                            file.seasonNumber = parseInt(e.target.value) || 1;
+                        } else if (e.target.classList.contains('episode-number')) {
+                            file.episodeNumber = parseInt(e.target.value) || 1;
+                        } else if (e.target.classList.contains('episode-order')) {
+                            file.order = parseInt(e.target.value) || 1;
+                        }
+                        
+                        // Проверяем на дубликаты сезон/серия
+                        this.checkForDuplicates();
+                    }
+                });
+            });
+            
+            // Обработчики для полей существующих видео (плейлист)
+            document.querySelectorAll('.episode-season-existing, .episode-number-existing, .episode-order-existing').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const videoId = e.target.dataset.videoId;
+                    const video = state.existingVideos.find(v => v.id === parseInt(videoId));
+                    if (video) {
+                        if (e.target.classList.contains('episode-season-existing')) {
+                            video.season_number = parseInt(e.target.value) || 1;
+                        } else if (e.target.classList.contains('episode-number-existing')) {
+                            video.episode_number = parseInt(e.target.value) || 1;
+                        } else if (e.target.classList.contains('episode-order-existing')) {
+                            video.order = parseInt(e.target.value) || 1;
+                        }
+                        
+                        // Автоматически сохраняем изменения
+                        this.saveExistingVideoChanges();
+                    }
+                });
+            });
+
+            // Обработчики для метаданных существующих видео (название, описание)
+            document.querySelectorAll('.video-title-existing, .video-description-existing').forEach(input => {
+                input.addEventListener('change', async (e) => {
+                    const videoId = e.target.dataset.videoId;
+                    const video = state.existingVideos.find(v => v.id === parseInt(videoId));
+                    if (video) {
+                        const updates = {};
+                        if (e.target.classList.contains('video-title-existing')) {
+                            updates.title = e.target.value;
+                            video.title = e.target.value;
+                        } else if (e.target.classList.contains('video-description-existing')) {
+                            updates.description = e.target.value;
+                            video.description = e.target.value;
+                        }
+                        
+                        // Сохраняем изменения на сервере
+                        await this.updateVideoMetadata(video.video_id, updates);
+                    }
+                });
+            });
+
+            // Обработчики для превью существующих видео
+            document.querySelectorAll('.video-thumbnail-existing').forEach(input => {
+                input.addEventListener('change', async (e) => {
+                    const videoId = e.target.dataset.videoId;
+                    const video = state.existingVideos.find(v => v.id === parseInt(videoId));
+                    if (video && e.target.files.length > 0) {
+                        await this.updateVideoThumbnail(video.video_id, e.target.files[0]);
+                    }
+                });
+            });
+        },
+
+        async updateVideoMetadata(videoId, updates) {
+            try {
+                const response = await fetch(`/upload/my/video/${videoId}/update/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': utils.getCookie('csrftoken'),
+                    },
+                    body: JSON.stringify(updates),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка обновления метаданных');
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Показываем уведомление об успехе
+                    this.showNotification('Метаданные обновлены', 'success');
+                } else {
+                    throw new Error(data.error || 'Неизвестная ошибка');
+                }
+            } catch (error) {
+                console.error('Ошибка при обновлении метаданных:', error);
+                this.showNotification('Не удалось обновить метаданные: ' + error.message, 'error');
+            }
+        },
+
+        async updateVideoThumbnail(videoId, thumbnailFile) {
+            try {
+                const formData = new FormData();
+                formData.append('thumbnail', thumbnailFile);
+
+                const response = await fetch(`/upload/my/video/${videoId}/update/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': utils.getCookie('csrftoken'),
+                    },
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки превью');
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.showNotification('Превью обновлено', 'success');
+                } else {
+                    throw new Error(data.error || 'Неизвестная ошибка');
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке превью:', error);
+                this.showNotification('Не удалось загрузить превью: ' + error.message, 'error');
+            }
+        },
+
+        showNotification(message, type = 'info') {
+            // Простое уведомление через alert (можно улучшить позже)
+            if (type === 'success') {
+                console.log('✓', message);
+            } else if (type === 'error') {
+                console.error('✗', message);
+                alert(message);
+            }
+        },
+
+        async saveExistingVideoChanges() {
+            if (!state.selectedPlaylistId) return;
+            
+            // Собираем данные для обновления
+            const items = state.existingVideos.map(video => ({
+                id: video.id,
+                order: video.order,
+                season_number: video.season_number,
+                episode_number: video.episode_number,
+            }));
+            
+            // Отправляем на сервер
+            await playlistManager.updateOrder(state.selectedPlaylistId, items);
+        },
+
+        checkForDuplicates() {
+            // Проверка на дубликаты сезон/серия
+            const seasonEpisodePairs = new Map();
+            const duplicates = [];
+            
+            state.files.forEach(file => {
+                const key = `${file.seasonNumber}-${file.episodeNumber}`;
+                if (seasonEpisodePairs.has(key)) {
+                    duplicates.push({ season: file.seasonNumber, episode: file.episodeNumber });
+                }
+                seasonEpisodePairs.set(key, file.id);
+            });
+            
+            // Удаляем старые предупреждения
+            document.querySelectorAll('.duplicate-warning').forEach(el => el.remove());
+            
+            if (duplicates.length > 0) {
+                // Показываем предупреждение
+                const uniqueDuplicates = [...new Set(duplicates.map(d => `Сезон ${d.season}, Серия ${d.episode}`))];
+                const warning = document.createElement('div');
+                warning.className = 'alert alert-warning duplicate-warning mt-3';
+                warning.innerHTML = `
+                    <strong><i class="bi bi-exclamation-triangle"></i> Внимание!</strong>
+                    Найдены дубликаты сезон/серия: ${uniqueDuplicates.join('; ')}
+                    <br><small>Это может привести к ошибке при загрузке. Пожалуйста, исправьте номера серий.</small>
+                `;
+                document.getElementById('files-list').insertBefore(warning, document.getElementById('files-container'));
+            }
+        },
+
+        attachDragHandlers() {
+            const cards = document.querySelectorAll('.file-card[draggable="true"]');
+            
+            cards.forEach(card => {
+                card.addEventListener('dragstart', (e) => {
+                    card.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/html', card.innerHTML);
+                });
+
+                card.addEventListener('dragend', (e) => {
+                    card.classList.remove('dragging');
+                });
+
+                card.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const draggingCard = document.querySelector('.dragging');
+                    if (draggingCard && draggingCard !== card) {
+                        card.classList.add('drag-over-file');
+                    }
+                });
+
+                card.addEventListener('dragleave', (e) => {
+                    card.classList.remove('drag-over-file');
+                });
+
+                card.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    card.classList.remove('drag-over-file');
+                    
+                    const draggingCard = document.querySelector('.dragging');
+                    if (draggingCard && draggingCard !== card) {
+                        // Определяем типы карточек (существующие или новые)
+                        const fromIsExisting = draggingCard.dataset.existing === 'true';
+                        const toIsExisting = card.dataset.existing === 'true';
+                        
+                        if (fromIsExisting && toIsExisting) {
+                            // Перемещаем существующие видео
+                            const fromId = parseInt(draggingCard.dataset.videoId);
+                            const toId = parseInt(card.dataset.videoId);
+                            this.reorderExistingVideos(fromId, toId);
+                        } else if (!fromIsExisting && !toIsExisting) {
+                            // Перемещаем новые файлы
+                            const fromId = draggingCard.dataset.fileId;
+                            const toId = card.dataset.fileId;
+                            this.reorderFiles(fromId, toId);
+                        }
+                        // Смешанное перемещение не поддерживается
+                    }
+                });
+            });
+        },
+
+        reorderFiles(fromId, toId) {
+            const fromIndex = state.files.findIndex(f => f.id === fromId);
+            const toIndex = state.files.findIndex(f => f.id === toId);
+            
+            if (fromIndex !== -1 && toIndex !== -1) {
+                // Перемещаем элемент
+                const [movedFile] = state.files.splice(fromIndex, 1);
+                state.files.splice(toIndex, 0, movedFile);
+                
+                // Обновляем порядок с учетом существующих видео
+                state.files.forEach((file, index) => {
+                    file.order = state.existingVideos.length + index + 1;
+                });
+                
+                this.render();
+            }
+        },
+
+        async reorderExistingVideos(fromId, toId) {
+            const fromIndex = state.existingVideos.findIndex(v => v.id === fromId);
+            const toIndex = state.existingVideos.findIndex(v => v.id === toId);
+            
+            if (fromIndex !== -1 && toIndex !== -1) {
+                // Перемещаем элемент
+                const [movedVideo] = state.existingVideos.splice(fromIndex, 1);
+                state.existingVideos.splice(toIndex, 0, movedVideo);
+                
+                // Обновляем порядок
+                state.existingVideos.forEach((video, index) => {
+                    video.order = index + 1;
+                });
+                
+                // Также обновляем порядок новых файлов
+                state.files.forEach((file, index) => {
+                    file.order = state.existingVideos.length + index + 1;
+                });
+                
+                this.render();
+                
+                // Сохраняем изменения на сервере
+                await this.saveExistingVideoChanges();
+            }
         }
     };
 
@@ -309,7 +937,12 @@
             // Добавляем метаданные
             Object.entries(this.metadata).forEach(([key, value]) => {
                 if (value !== null && value !== undefined && value !== '') {
-                    formData.append(key, value);
+                    // Если это File (превью), добавляем как файл
+                    if (value instanceof File) {
+                        formData.append(key, value);
+                    } else {
+                        formData.append(key, value);
+                    }
                 }
             });
 
@@ -448,7 +1081,6 @@
             this.renderProgressSection();
 
             const results = [];
-            let currentEpisode = metadata.episode_number || 1;
             let createdPlaylistId = null; // Для хранения ID созданного плейлиста
 
             for (const fileInfo of state.files) {
@@ -465,11 +1097,20 @@
                             delete fileMetadata.playlist_description;
                         }
                         
-                        fileMetadata.episode_number = currentEpisode++;
-                        fileMetadata.title = fileInfo.name.replace(/\.[^/.]+$/, '');
+                        // Используем индивидуальные значения из полей редактирования
+                        fileMetadata.season_number = fileInfo.seasonNumber || 1;
+                        fileMetadata.episode_number = fileInfo.episodeNumber || 1;
+                        fileMetadata.order = fileInfo.order || 1;
+                        fileMetadata.title = fileInfo.title || fileInfo.name.replace(/\.[^/.]+$/, '');
+                        fileMetadata.description = fileInfo.description || '';
                     } else {
-                        fileMetadata.title = metadata.title || fileInfo.name.replace(/\.[^/.]+$/, '');
-                        fileMetadata.description = metadata.description || '';
+                        fileMetadata.title = fileInfo.title || metadata.title || fileInfo.name.replace(/\.[^/.]+$/, '');
+                        fileMetadata.description = fileInfo.description || metadata.description || '';
+                    }
+                    
+                    // Добавляем превью если есть
+                    if (fileInfo.thumbnail) {
+                        fileMetadata.thumbnail = fileInfo.thumbnail;
                     }
 
                     const upload = new ChunkedUpload(fileInfo, fileMetadata);
@@ -508,8 +1149,10 @@
                     metadata.playlist_description = document.getElementById('new-playlist-description').value;
                 }
                 
-                metadata.season_number = document.getElementById('season-number').value;
-                metadata.episode_number = parseInt(document.getElementById('start-episode').value);
+                const seasonInput = document.getElementById('season-number');
+                const episodeInput = document.getElementById('start-episode');
+                metadata.season_number = seasonInput ? seasonInput.value : '1';
+                metadata.episode_number = episodeInput ? parseInt(episodeInput.value) : 1;
             }
 
             return metadata;
@@ -603,8 +1246,59 @@
                     e.target.id === 'existing-playlist' ? 'block' : 'none';
                 document.getElementById('new-playlist-section').style.display = 
                     e.target.id === 'new-playlist' ? 'block' : 'none';
+                
+                // Очищаем существующие видео при переключении на новый плейлист
+                if (e.target.id === 'new-playlist') {
+                    state.existingVideos = [];
+                    state.selectedPlaylistId = null;
+                    fileManager.render();
+                }
             });
         });
+
+        // Обработчик выбора существующего плейлиста
+        const playlistSelect = document.getElementById('playlist-select');
+        if (playlistSelect) {
+            playlistSelect.addEventListener('change', async (e) => {
+                const playlistId = e.target.value;
+                if (playlistId) {
+                    state.selectedPlaylistId = playlistId;
+                    await playlistManager.loadPlaylistVideos(playlistId);
+                } else {
+                    state.existingVideos = [];
+                    state.selectedPlaylistId = null;
+                    fileManager.render();
+                }
+            });
+        }
+
+        // Автоматическое обновление полей при изменении глобального сезона/серии
+        const seasonNumberInput = document.getElementById('season-number');
+        const startEpisodeInput = document.getElementById('start-episode');
+        
+        if (seasonNumberInput) {
+            seasonNumberInput.addEventListener('change', (e) => {
+                if (state.uploadMode === 'playlist' && state.files.length > 0) {
+                    const newSeason = parseInt(e.target.value) || 1;
+                    state.files.forEach(file => {
+                        file.seasonNumber = newSeason;
+                    });
+                    fileManager.render();
+                }
+            });
+        }
+
+        if (startEpisodeInput) {
+            startEpisodeInput.addEventListener('change', (e) => {
+                if (state.uploadMode === 'playlist' && state.files.length > 0) {
+                    const startEpisode = parseInt(e.target.value) || 1;
+                    state.files.forEach((file, index) => {
+                        file.episodeNumber = startEpisode + index;
+                    });
+                    fileManager.render();
+                }
+            });
+        }
 
         // Drag & Drop для одиночного файла
         setupDropZone('single-drop-zone', 'single-file-input', false);
@@ -613,11 +1307,13 @@
         setupDropZone('playlist-drop-zone', 'playlist-file-input', true);
 
         // Кнопки выбора файлов
-        document.getElementById('single-file-btn').addEventListener('click', () => {
+        document.getElementById('single-file-btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // Предотвращаем всплытие к drop-zone
             document.getElementById('single-file-input').click();
         });
 
-        document.getElementById('playlist-file-btn').addEventListener('click', () => {
+        document.getElementById('playlist-file-btn').addEventListener('click', (e) => {
+            e.stopPropagation(); // Предотвращаем всплытие к drop-zone
             document.getElementById('playlist-file-input').click();
         });
 
@@ -686,7 +1382,11 @@
             }
         });
 
-        zone.addEventListener('click', () => {
+        zone.addEventListener('click', (e) => {
+            // Не открываем диалог, если кликнули на кнопку или input
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.closest('button')) {
+                return;
+            }
             input.click();
         });
     }
@@ -718,6 +1418,17 @@
                     alert('Пожалуйста, введите название плейлиста');
                     return false;
                 }
+            }
+            
+            // Проверка на дубликаты сезон/серия
+            const seasonEpisodePairs = new Map();
+            for (const file of state.files) {
+                const key = `${file.seasonNumber}-${file.episodeNumber}`;
+                if (seasonEpisodePairs.has(key)) {
+                    alert(`Обнаружены дубликаты: Сезон ${file.seasonNumber}, Серия ${file.episodeNumber}\n\nПожалуйста, исправьте номера серий перед загрузкой.`);
+                    return false;
+                }
+                seasonEpisodePairs.set(key, file.id);
             }
         }
 

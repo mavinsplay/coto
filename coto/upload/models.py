@@ -180,7 +180,7 @@ class PlaylistItem(models.Model):
     class Meta:
         verbose_name = _("Эпизод плейлиста")
         verbose_name_plural = _("Эпизоды плейлиста")
-        ordering = ["season_number", "episode_number", "order"]
+        ordering = ["order", "season_number", "episode_number"]
         unique_together = ("playlist", "season_number", "episode_number")
 
     def __str__(self):
