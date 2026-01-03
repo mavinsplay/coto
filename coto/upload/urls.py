@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 
 from upload.views import (
     SeriesVideoUploadView,
@@ -12,4 +12,5 @@ urlpatterns = [
     path("", UploadOrientationView.as_view(), name="orientation"),
     path("single/", SingleVideoUploadView.as_view(), name="single_upload"),
     path("series/", SeriesVideoUploadView.as_view(), name="series_upload"),
+    path("my/", include("upload.user_chunked_urls")),
 ]

@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Загрузка видео - Coto{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/user_upload.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Кнопка назад -->
+            <div class="mb-4">
+                <a href="{% url 'upload:orientation' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Назад к выбору
+                </a>
+            </div>
+
+            <!-- Заголовок -->
+            <div class="text-center mb-5">
+                <h1 class="display-4 mb-3">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                    Загрузить видео
+                </h1>
+                <p class="lead text-muted">
+                    Загрузите одно или несколько видео. Создайте плейлист для сериалов и шоу.
+                </p>
+            </div>
+
+            <!-- Выбор режима загрузки -->
+            <div class="card shadow-sm mb-4 border-0">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">
+                        <i class="bi bi-toggles"></i> Режим загрузки
+                    </h5>
+                    <div class="btn-group w-100" role="group" aria-label="Режим загрузки">
+                        <input type="radio" class="btn-check" name="upload-mode" id="single-mode" checked>
+                        <label class="btn btn-outline-primary btn-lg" for="single-mode">
+                            <i class="bi bi-file-earmark-play"></i>
+                            Одно видео
+                        </label>
+
+                        <input type="radio" class="btn-check" name="upload-mode" id="playlist-mode">
+                        <label class="btn btn-outline-primary btn-lg" for="playlist-mode">
+                            <i class="bi bi-collection-play"></i>
+                            Плейлист / Сериал
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Форма загрузки -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <form id="upload-form">
+                        {% csrf_token %}
+                        
+                        <!-- Одиночное видео -->
+                        <div id="single-upload-section">
+                            <div class="mb-4">
+                                <label for="single-title" class="form-label fw-bold">
+                                    <i class="bi bi-tag"></i> Название видео
+                                </label>
+                                <input type="text" class="form-control form-control-lg" 
+                                       id="single-title" 
+                                       placeholder="Введите название видео">
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="single-description" class="form-label fw-bold">
+                                    <i class="bi bi-card-text"></i> Описание
+                                </label>
+                                <textarea class="form-control" 
+                                          id="single-description" 
+                                          rows="3" 
+                                          placeholder="Добавьте описание (необязательно)"></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-file-earmark-arrow-up"></i> Выберите файл
+                                </label>
+                                <div class="drop-zone" id="single-drop-zone">
+                                    <div class="drop-zone-content">
+                                        <i class="bi bi-cloud-arrow-up-fill display-1 text-primary mb-3"></i>
+                                        <p class="mb-2">Перетащите видео сюда или</p>
+                                        <button type="button" class="btn btn-primary btn-lg" id="single-file-btn">
+                                            <i class="bi bi-folder2-open"></i> Выбрать файл
+                                        </button>
+                                        <input type="file" id="single-file-input" accept="video/*" style="display: none;">
+                                        <p class="text-muted mt-3 mb-0">
+                                            <small>Поддерживаются: MP4, MKV, AVI, MOV и другие форматы</small>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Плейлист -->
+                        <div id="playlist-upload-section" style="display: none;">
+                            <!-- Выбор или создание плейлиста -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-collection"></i> Плейлист
+                                </label>
+                                
+                                <div class="btn-group w-100 mb-3" role="group">
+                                    <input type="radio" class="btn-check" name="playlist-choice" id="existing-playlist" checked>
+                                    <label class="btn btn-outline-secondary" for="existing-playlist">
+                                        Существующий
+                                    </label>
+
+                                    <input type="radio" class="btn-check" name="playlist-choice" id="new-playlist">
+                                    <label class="btn btn-outline-secondary" for="new-playlist">
+                                        Создать новый
+                                    </label>
+                                </div>
+
+                                <!-- Выбор существующего -->
+                                <div id="existing-playlist-section">
+                                    <select class="form-select form-select-lg" id="playlist-select">
+                                        <option value="">Выберите плейлист</option>
+                                        {% for playlist in user_playlists %}
+                                        <option value="{{ playlist.id }}">{{ playlist.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- Создание нового -->
+                                <div id="new-playlist-section" style="display: none;">
+                                    <input type="text" class="form-control form-control-lg mb-3" 
+                                           id="new-playlist-title" 
+                                           placeholder="Название плейлиста">
+                                    <textarea class="form-control" 
+                                              id="new-playlist-description" 
+                                              rows="2" 
+                                              placeholder="Описание плейлиста (необязательно)"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Сезон и начальный эпизод -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="season-number" class="form-label fw-bold">
+                                        <i class="bi bi-collection"></i> Сезон
+                                    </label>
+                                    <input type="number" class="form-control form-control-lg" 
+                                           id="season-number" 
+                                           value="1" 
+                                           min="1">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="start-episode" class="form-label fw-bold">
+                                        <i class="bi bi-play-circle"></i> Начальная серия
+                                    </label>
+                                    <input type="number" class="form-control form-control-lg" 
+                                           id="start-episode" 
+                                           value="1" 
+                                           min="1">
+                                </div>
+                            </div>
+
+                            <!-- Множественная загрузка -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-file-earmark-arrow-up"></i> Выберите файлы
+                                </label>
+                                <div class="drop-zone" id="playlist-drop-zone">
+                                    <div class="drop-zone-content">
+                                        <i class="bi bi-cloud-arrow-up-fill display-1 text-primary mb-3"></i>
+                                        <p class="mb-2">Перетащите видео сюда или</p>
+                                        <button type="button" class="btn btn-primary btn-lg" id="playlist-file-btn">
+                                            <i class="bi bi-folder2-open"></i> Выбрать файлы
+                                        </button>
+                                        <input type="file" id="playlist-file-input" accept="video/*" multiple style="display: none;">
+                                        <p class="text-muted mt-3 mb-0">
+                                            <small>Можно выбрать несколько файлов. Они будут добавлены как серии.</small>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Список файлов для загрузки -->
+                        <div id="files-list" class="mb-4" style="display: none;">
+                            <h5 class="mb-3">
+                                <i class="bi bi-list-check"></i> Файлы для загрузки
+                            </h5>
+                            <div id="files-container"></div>
+                        </div>
+
+                        <!-- Кнопка загрузки -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg" id="upload-btn" disabled>
+                                <i class="bi bi-cloud-arrow-up"></i> Начать загрузку
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Прогресс загрузки -->
+            <div id="upload-progress-section" class="mt-4" style="display: none;">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-4">
+                            <i class="bi bi-arrow-repeat spin"></i> Загрузка видео...
+                        </h5>
+                        <div id="progress-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Результаты -->
+            <div id="upload-results-section" class="mt-4" style="display: none;">
+                <div class="card shadow-sm border-0 border-start border-success border-4">
+                    <div class="card-body p-4">
+                        <h5 class="card-title text-success mb-4">
+                            <i class="bi bi-check-circle-fill"></i> Загрузка завершена!
+                        </h5>
+                        <div id="results-container"></div>
+                        <div class="mt-4 d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-primary btn-lg" onclick="location.reload()">
+                                <i class="bi bi-arrow-clockwise"></i> Загрузить еще
+                            </button>
+                            <a href="{% url 'rooms:list' %}" class="btn btn-outline-primary btn-lg">
+                                <i class="bi bi-collection-play"></i> Перейти к комнатам
+                            </a>
+                            <a href="{% url 'homepage:homepage' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-house"></i> На главную
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'upload/js/spark-md5.min.js' %}"></script>
+<script src="{% static 'js/user_upload.js' %}"></script>
+{% endblock %}

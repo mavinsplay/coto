@@ -1,0 +1,222 @@
+/* Стили для страницы загрузки видео */
+
+/* Общие улучшения */
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+}
+
+.drop-zone {
+    border: 3px dashed var(--border-color);
+    border-radius: 1rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    background-color: var(--bg-secondary);
+    cursor: pointer;
+}
+
+.drop-zone:hover {
+    border-color: var(--accent-primary);
+    background-color: var(--bg-hover);
+}
+
+.drop-zone.drag-over {
+    border-color: var(--accent-success);
+    background-color: var(--bg-tertiary);
+    transform: scale(1.02);
+}
+
+.drop-zone-content {
+    pointer-events: none;
+}
+
+/* Карточки файлов */
+.file-card {
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    background-color: var(--bg-card);
+    transition: all 0.3s ease;
+}
+
+.file-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.file-card.uploading {
+    border-color: var(--accent-primary);
+    background-color: var(--bg-secondary);
+}
+
+.file-card.success {
+    border-color: var(--accent-success);
+    background-color: var(--bg-secondary);
+}
+
+.file-card.error {
+    border-color: var(--accent-danger);
+    background-color: var(--bg-secondary);
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.file-icon {
+    font-size: 2.5rem;
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.file-details {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.file-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-primary);
+}
+
+.file-size {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.file-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Прогресс-бары */
+.progress {
+    height: 1.5rem;
+    border-radius: 0.75rem;
+    background-color: var(--bg-tertiary);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    overflow: hidden;
+}
+
+.progress-bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.5rem;
+    transition: width 0.6s ease;
+    background-color: var(--accent-primary) !important;
+    color: #ffffff;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Переопределение для Bootstrap .bg-primary в прогресс-баре */
+.progress .progress-bar.bg-primary {
+    background-color: var(--accent-primary) !important;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.progress-status {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.progress-percentage {
+    color: var(--text-secondary);
+}
+
+/* Анимация вращения */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin {
+    animation: spin 2s linear infinite;
+}
+
+/* Результаты загрузки */
+.result-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.result-icon.success {
+    color: var(--accent-success);
+}
+
+.result-icon.error {
+    color: var(--accent-danger);
+}
+
+.result-details {
+    flex-grow: 1;
+}
+
+.result-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.result-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .drop-zone {
+        padding: 2rem 1rem;
+    }
+    
+    .file-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .file-actions {
+        width: 100%;
+    }
+    
+    .file-actions button {
+        flex: 1;
+    }
+}
+
+/* Адаптация для темной темы уже обрабатывается через CSS-переменные */

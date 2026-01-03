@@ -21,6 +21,8 @@
     <link rel="stylesheet" href="{% static 'css/footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/coto_theme.css' %}">
     
+    {% block extra_css %}{% endblock %}
+    
     <!-- Scripts -->
     <script src="{% static 'js/theme.js' %}"></script>
     <script src="{% static 'js/bootstrap.bundle.js' %}" defer></script>
