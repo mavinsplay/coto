@@ -173,11 +173,17 @@ class UserChunkedUploadCompleteView(
 
         # Если нужно создать новый плейлист
         elif playlist_title:
-            playlist = Playlist.objects.create(
+            playlist = Playlist(
                 title=playlist_title,
                 description=req.POST.get("playlist_description", ""),
                 created_by=req.user,
             )
+            
+            # Добавляем обложку плейлиста, если она передана
+            if req and req.FILES.get('playlist_cover'):
+                playlist.cover_image = req.FILES['playlist_cover']
+            
+            playlist.save()
             
             # Если order не передан, используем 1 для первого элемента
             if not order or order == "0":
@@ -247,6 +253,7 @@ class PlaylistVideosView(LoginRequiredMixin, View):
                     'video_id': item.video.id,
                     'title': item.video.title,
                     'description': item.video.description,
+                    'thumbnail_url': item.video.thumbnail.url if item.video.thumbnail else None,
                     'season_number': item.season_number,
                     'episode_number': item.episode_number,
                     'order': item.order,

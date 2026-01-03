@@ -133,10 +133,32 @@
                                     <input type="text" class="form-control form-control-lg mb-3" 
                                            id="new-playlist-title" 
                                            placeholder="Название плейлиста">
-                                    <textarea class="form-control" 
+                                    <textarea class="form-control mb-3" 
                                               id="new-playlist-description" 
                                               rows="2" 
                                               placeholder="Описание плейлиста (необязательно)"></textarea>
+                                    
+                                    <!-- Обложка плейлиста -->
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            <i class="bi bi-image"></i> Обложка плейлиста (необязательно)
+                                        </label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div id="playlist-cover-preview" class="playlist-cover-preview" style="display: none;">
+                                                <img src="" alt="Превью обложки" class="img-thumbnail">
+                                                <button type="button" class="btn btn-sm btn-danger playlist-cover-remove" title="Удалить">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <button type="button" class="btn btn-outline-secondary" id="playlist-cover-btn">
+                                                    <i class="bi bi-image"></i> Выбрать изображение
+                                                </button>
+                                                <input type="file" id="playlist-cover-input" accept="image/*" style="display: none;">
+                                                <small class="d-block text-muted mt-2">Рекомендуется: 16:9, JPG/PNG, до 5 МБ</small>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

@@ -20,6 +20,7 @@
         uploads: new Map(),
         existingVideos: [],  // Существующие видео в плейлисте
         selectedPlaylistId: null,  // ID выбранного плейлиста
+        playlistCoverFile: null,  // Файл обложки плейлиста
     };
 
     // Утилиты
@@ -53,6 +54,12 @@
 
         generateId() {
             return Math.random().toString(36).substr(2, 9);
+        },
+
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         },
 
         async calculateMD5(file, onProgress) {
@@ -292,17 +299,22 @@
             // Создаем HTML для существующих видео
             const existingVideosHtml = state.existingVideos.map((video) => `
                 <div class="file-card existing-video" data-video-id="${video.id}" data-existing="true" draggable="true">
+                    ${video.thumbnail_url ? `
+                        <div class="video-thumbnail-preview">
+                            <img src="${utils.escapeHtml(video.thumbnail_url)}" alt="${utils.escapeHtml(video.title)}" loading="lazy">
+                        </div>
+                    ` : ''}
                     <div class="file-info">
                         ${state.uploadMode === 'playlist' ? `
                             <div class="drag-handle">
                                 <i class="bi bi-grip-vertical"></i>
                             </div>
                         ` : ''}
-                        <div class="file-icon">
+                        <div class="file-icon ${video.thumbnail_url ? 'has-thumbnail' : ''}">
                             <i class="bi bi-camera-video-fill text-success"></i>
                         </div>
                         <div class="file-details">
-                            <div class="file-name" title="${video.title}">${video.title}</div>
+                            <div class="file-name" title="${utils.escapeHtml(video.title)}">${utils.escapeHtml(video.title)}</div>
                             <div class="file-size">
                                 <span class="badge bg-success">Загружено</span>
                                 ${video.file_size ? utils.formatFileSize(video.file_size) : ''}
@@ -387,17 +399,22 @@
             // Создаем HTML для новых файлов
             const newFilesHtml = state.files.map((file, index) => `
                 <div class="file-card" data-file-id="${file.id}" draggable="${file.status === 'pending'}">
+                    ${file.thumbnailPreview ? `
+                        <div class="video-thumbnail-preview">
+                            <img src="${file.thumbnailPreview}" alt="${utils.escapeHtml(file.title)}" loading="lazy">
+                        </div>
+                    ` : ''}
                     <div class="file-info">
                         ${file.status === 'pending' && state.uploadMode === 'playlist' ? `
                             <div class="drag-handle">
                                 <i class="bi bi-grip-vertical"></i>
                             </div>
                         ` : ''}
-                        <div class="file-icon">
+                        <div class="file-icon ${file.thumbnailPreview ? 'has-thumbnail' : ''}">
                             <i class="bi bi-file-earmark-play-fill"></i>
                         </div>
                         <div class="file-details">
-                            <div class="file-name" title="${file.name}">${file.name}</div>
+                            <div class="file-name" title="${utils.escapeHtml(file.name)}">${utils.escapeHtml(file.name)}</div>
                             <div class="file-size">${utils.formatFileSize(file.size)}</div>
                         </div>
                         <div class="file-actions">
@@ -422,7 +439,7 @@
                                 <input type="text" 
                                        id="title-${file.id}" 
                                        class="form-control form-control-sm video-title" 
-                                       value="${file.title || ''}" 
+                                       value="${utils.escapeHtml(file.title || '')}" 
                                        data-file-id="${file.id}"
                                        placeholder="Название видео">
                             </div>
@@ -432,7 +449,7 @@
                                           class="form-control form-control-sm video-description" 
                                           rows="2"
                                           data-file-id="${file.id}"
-                                          placeholder="Описание видео">${file.description || ''}</textarea>
+                                          placeholder="Описание видео">${utils.escapeHtml(file.description || '')}</textarea>
                             </div>
                             <div class="metadata-field">
                                 <label for="thumbnail-${file.id}">Превью</label>
@@ -515,7 +532,14 @@
                     const file = state.files.find(f => f.id === fileId);
                     if (file && e.target.files.length > 0) {
                         file.thumbnail = e.target.files[0];
-                        this.render();
+                        
+                        // Создаем предпросмотр превью
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            file.thumbnailPreview = event.target.result;
+                            this.render();
+                        };
+                        reader.readAsDataURL(e.target.files[0]);
                     }
                 });
             });
@@ -1095,6 +1119,7 @@
                             fileMetadata.playlist_id = createdPlaylistId;
                             delete fileMetadata.playlist_title;
                             delete fileMetadata.playlist_description;
+                            delete fileMetadata.playlist_cover; // Обложка отправляется только один раз
                         }
                         
                         // Используем индивидуальные значения из полей редактирования
@@ -1147,6 +1172,11 @@
                 } else {
                     metadata.playlist_title = document.getElementById('new-playlist-title').value;
                     metadata.playlist_description = document.getElementById('new-playlist-description').value;
+                    
+                    // Добавляем обложку плейлиста, если она выбрана
+                    if (state.playlistCoverFile) {
+                        metadata.playlist_cover = state.playlistCoverFile;
+                    }
                 }
                 
                 const seasonInput = document.getElementById('season-number');
@@ -1316,6 +1346,57 @@
             e.stopPropagation(); // Предотвращаем всплытие к drop-zone
             document.getElementById('playlist-file-input').click();
         });
+
+        // Обработчик кнопки выбора обложки плейлиста
+        const playlistCoverBtn = document.getElementById('playlist-cover-btn');
+        const playlistCoverInput = document.getElementById('playlist-cover-input');
+        const playlistCoverPreview = document.getElementById('playlist-cover-preview');
+        
+        if (playlistCoverBtn && playlistCoverInput) {
+            playlistCoverBtn.addEventListener('click', () => {
+                playlistCoverInput.click();
+            });
+
+            playlistCoverInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    // Проверка типа файла
+                    if (!file.type.startsWith('image/')) {
+                        alert('Пожалуйста, выберите изображение');
+                        return;
+                    }
+                    
+                    // Проверка размера (5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Размер изображения не должен превышать 5 МБ');
+                        return;
+                    }
+
+                    // Сохраняем файл
+                    state.playlistCoverFile = file;
+
+                    // Показываем превью
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = playlistCoverPreview.querySelector('img');
+                        img.src = e.target.result;
+                        playlistCoverPreview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Кнопка удаления обложки
+            const removeBtn = playlistCoverPreview.querySelector('.playlist-cover-remove');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    state.playlistCoverFile = null;
+                    playlistCoverInput.value = '';
+                    playlistCoverPreview.style.display = 'none';
+                    playlistCoverPreview.querySelector('img').src = '';
+                });
+            }
+        }
 
         // Изменение файлов
         document.getElementById('single-file-input').addEventListener('change', (e) => {

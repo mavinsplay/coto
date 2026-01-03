@@ -112,6 +112,8 @@
     border-radius: 0.25rem;
     display: flex;
     align-items: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .playlist-item:hover {
@@ -125,6 +127,8 @@
     object-fit: cover;
     border-radius: 0.25rem;
     margin-right: 1rem;
+    flex-shrink: 0;
+    display: block;
 }
   
 #participants-list {
@@ -138,8 +142,14 @@
     color: white;
     border-color: var(--accent-primary);
 }
+
 .playlist-item.active .text-muted {
     color: rgba(255,255,255,0.85);
+}
+
+.playlist-item .flex-grow-1 {
+    min-width: 0;
+    overflow: hidden;
 }
   
   
