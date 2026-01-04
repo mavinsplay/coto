@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Активация аккаунта</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: #422766;
+            color: #ffffff;
+            padding: 40px 30px;
+            text-align: center;
+            border-bottom: 4px solid #5a3485;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .content h2 {
+            color: #333;
+            font-size: 24px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .content p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 32px;
+            background: #422766;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px solid #422766;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            background: #5a3485;
+            border-color: #5a3485;
+        }
+        .divider {
+            border-top: 1px solid #e0e0e0;
+            margin: 30px 0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #422766;
+            text-decoration: none;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #422766;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .emoji {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Добро пожаловать в {{ site_name }}!</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Здравствуйте, {{ user.username }}! <span class="emoji">👋</span></h2>
+            
+            <p>Спасибо за регистрацию на {{ site_name }}. Мы рады видеть вас на нашей платформе!</p>
+            
+            <p>Чтобы завершить регистрацию и начать использовать аккаунт, пожалуйста, подтвердите ваш email адрес, нажав на кнопку ниже:</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ activation_link }}" class="button">Активировать аккаунт</a>
+            </div>
+            
+            <div class="info-box">
+                <p><strong>Важно:</strong> Эта ссылка активации действительна в течение 24 часов по соображениям безопасности.</p>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <p style="font-size: 14px; color: #888;">
+                Если кнопка выше не работает, вы можете скопировать и вставить следующую ссылку в адресную строку браузера:
+            </p>
+            <p style="word-break: break-all; font-size: 13px; color: #422766;">
+                {{ activation_link }}
+            </p>
+            
+            <div class="divider"></div>
+            
+            <p style="font-size: 14px; color: #888;">
+                Если вы не регистрировались на {{ site_name }}, просто проигнорируйте это письмо.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {% now "Y" %} {{ site_name }}. Все права защищены.</p>
+            <p>Это автоматическое сообщение, пожалуйста, не отвечайте на него.</p>
+        </div>
+    </div>
+</body>
+</html>

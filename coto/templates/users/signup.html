@@ -1,108 +1,382 @@
 {% extends "base.html" %}
 {% load static %}
-{% load i18n %}
 
-{% block title %}
-  {{title}}
-{% endblock title %}
+{% block title %}Регистрация - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .auth-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        box-shadow: var(--shadow-md);
+        max-width: 520px;
+        width: 100%;
+        margin: 0 1rem;
+    }
+    
+    .auth-header {
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .auth-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--text-primary);
+    }
+    
+    .auth-header p {
+        color: var(--text-secondary);
+        margin: 0.5rem 0 0 0;
+    }
+    
+    .auth-body {
+        padding: 2rem;
+    }
+    
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+    
+    
+    .password-toggle {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 0.5rem;
+        z-index: 10;
+    }
+    
+    .password-toggle:hover {
+        color: var(--accent-primary);
+    }
+    
+    .divider {
+        text-align: center;
+        margin: 1.5rem 0;
+        position: relative;
+    }
+    
+    .divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--border-color);
+    }
+    
+    .divider span {
+        background: var(--bg-card);
+        padding: 0 1rem;
+        position: relative;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    
+    .auth-footer {
+        text-align: center;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .auth-link {
+        color: var(--accent-primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .auth-link:hover {
+        color: var(--accent-primary-hover);
+        text-decoration: underline;
+    }
+    
+    .password-strength {
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 2px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .password-strength-bar {
+        height: 100%;
+        width: 0;
+        transition: all 0.3s;
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .form-check-input {
+        width: 1.125rem;
+        height: 1.125rem;
+        margin: 0.125rem 0 0 0;
+        border: 2px solid var(--border-color);
+        border-radius: 0.25rem;
+        cursor: pointer;
+        background-color: var(--bg-card);
+        flex-shrink: 0;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--accent-primary);
+        border-color: var(--accent-primary);
+    }
+    
+    .form-check-input:checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 0.875rem;
+        font-weight: bold;
+        line-height: 1;
+    }
+    
+    .form-check-input:hover {
+        border-color: var(--accent-primary);
+    }
+    
+    .form-check-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.25rem rgba(66, 39, 102, 0.25);
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        user-select: none;
+        margin: 0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .form-check-label a {
+        color: var(--accent-primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .form-check-label a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-md">
-  <div class="d-flex justify-content-center align-items-center">
-    <div class="card coto-secondary rounded rounded-5 coto-login mt-5">
-      <div class="card-body">
-        <div class="col">
-
-          <p class="text-center h2 mb-5 mx-1 mt-4">{% trans "Signup" %}</p>
-
-          <form method="post" class="mx-1 mx-md-4">
-            {% csrf_token %}
-
-            <div class="d-flex flex-row align-items-center mb-4">
-              <i class="bi bi-person-fill me-2"></i>
-              <div data-mdb-input-init class="form-outline flex-fill mb-0">
-                <input type="text" id="id_username" name="username" class="form-control" placeholder="{% trans 'login_placeholder' %}">
-                {% for error in form.username.errors %}
-                  <div class="text-danger">{{ error }}</div>
-                {% endfor %}
-              </div>
-            </div>
-
-            <div class="d-flex flex-row align-items-center mb-4">
-              <i class="bi bi-envelope-at me-2"></i>
-              <div data-mdb-input-init class="form-outline flex-fill mb-0">
-                <input type="email" id="id_email" name="email" class="form-control" placeholder="{% trans 'email_placeholder' %}">
-                {% for error in form.email.errors %}
-                  <div class="text-danger">{{ error }}</div>
-                {% endfor %}
-              </div>
-            </div>
-
-            <div class="d-flex flex-row align-items-center mb-4 position-relative">
-              <i class="bi bi-key-fill me-2"></i>
-              <div data-mdb-input-init class="form-outline flex-fill mb-0">
-                <input type="password" id="id_password1" name="password1" class="form-control" placeholder="{% trans 'password_placeholder' %}">
-                {% for error in form.password1.errors %}
-                  <div class="text-danger">{{ error }}</div>
-                {% endfor %}
-              </div>
-              <button type="button" class="btn justify-content-end align-start-0 position-absolute end-0 top-0" onclick="togglePasswordVisibility('id_password1', 'pwd_toggle1')">
-                <i id="pwd_toggle1" class="bi bi-eye"></i>
-              </button>
-            </div>
-
-            <div class="d-flex flex-row align-items-center mb-4 position-relative">
-              <i class="bi bi-key-fill me-2"></i>
-              <div data-mdb-input-init class="form-outline flex-fill mb-0">
-                
-                <input type="password" id="id_password2" name="password2" class="form-control" placeholder="{% trans 'repeat_password_placeholder' %}">
-
-                {% for error in form.password2.errors %}
-                  <div class="text-danger">{{ error }}</div>
-                {% endfor %}
-              </div>
-              <button type="button" class="btn justify-content-end align-start-0 position-absolute end-0 top-0" onclick="togglePasswordVisibility('id_password2', 'pwd_toggle2')">
-                <i id="pwd_toggle2" class="bi bi-eye"></i>
-              </button>
-            </div>
-
-            <div class="form-check d-flex justify-content-center mb-4 ">
-              <input class="form-check-input me-2" type="checkbox" id="terms" required>
-              <label class="form-check-label coto-font-medium" for="terms">
-                {% trans "I accept the terms of the" %} <a href="">{% trans "user agreement" %}</a>
-              </label>
-            </div>
-              {% if form.turnstile %}
-                <div class="d-flex flex-row align-items-center justify-content-center mb-4">
-                  {{ form.turnstile }}
-                  {% for error in form.turnstile.errors %}
-                      <div class="text-danger">{{ error }}</div>
-                  {% endfor %}
-                </div>
-              {% endif %}
-            <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
-              <button type="submit" class="btn coto-primary coto-btn btn-lg">{% trans "Signup_confirm" %}</button>
-            </div>
-          </form>
-          <div class="d-flex justify-content-center align-items-center mt-1">
-            <p class="coto-font-medium"> {% trans "Already have an account?" %} <a href="{% url 'users:login' %}">{% trans "Login_confirm" %}</a></p>
-          </div>
-
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Создать аккаунт</h1>
+            <p>Присоединяйтесь к нам сегодня!</p>
         </div>
-      </div>
+        
+        <div class="auth-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <div class="form-floating">
+                        {{ form.username }}
+                        <label for="{{ form.username.id_for_label }}">Логин</label>
+                    </div>
+                    {% if form.username.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.username.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if form.username.help_text %}
+                        <div class="text-muted small mt-1">{{ form.username.help_text }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-floating">
+                        {{ form.email }}
+                        <label for="{{ form.email.id_for_label }}">Email</label>
+                    </div>
+                    {% if form.email.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.email.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if form.email.help_text %}
+                        <div class="text-muted small mt-1">{{ form.email.help_text }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-floating position-relative">
+                        {{ form.password1 }}
+                        <label for="{{ form.password1.id_for_label }}">Пароль</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword('{{ form.password1.id_for_label }}', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password1.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.password1.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="password-strength">
+                        <div class="password-strength-bar" id="password-strength"></div>
+                    </div>
+                    {% if form.password1.help_text %}
+                        <div class="text-muted small mt-1">Минимум 8 символов, не должен быть полностью числовым</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-floating position-relative">
+                        {{ form.password2 }}
+                        <label for="{{ form.password2.id_for_label }}">Подтвердите пароль</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword('{{ form.password2.id_for_label }}', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password2.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.password2.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.terms_accepted }}
+                        <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}">
+                            Я принимаю <a href="{% url 'users:terms' %}" target="_blank">условия использования</a>
+                        </label>
+                    </div>
+                    {% if form.terms_accepted.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.terms_accepted.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {% if turnstile_enabled %}
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
+                    </div>
+                    {{ form.turnstile_token }}
+                {% endif %}
+                
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-person-plus-fill me-2"></i>
+                    Создать аккаунт
+                </button>
+            </form>
+            
+            <div class="divider">
+                <span>или</span>
+            </div>
+            
+            <div class="auth-footer">
+                <p class="mb-0">
+                    Уже есть аккаунт?
+                    <a href="{% url 'users:login' %}" class="auth-link">Войти</a>
+                </p>
+            </div>
+        </div>
     </div>
-    <div>
-  </div>
-  </div>
 </div>
 
+{% if turnstile_enabled %}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
-  function togglePasswordVisibility(inputId, iconId) {
-    const input = document.getElementById(inputId);
-    const icon = document.getElementById(iconId);
-    const type = input.type === 'password' ? 'text' : 'password';
-    input.type = type;
-    icon.className = type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
-  }
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const turnstileResponse = document.querySelector('[name="cf-turnstile-response"]');
+        if (turnstileResponse && turnstileResponse.value) {
+            document.getElementById('{{ form.turnstile_token.id_for_label }}').value = turnstileResponse.value;
+        }
+    });
+});
+</script>
+{% endif %}
+
+<script>
+function togglePassword(fieldId, button) {
+    const field = document.getElementById(fieldId);
+    const icon = button.querySelector('i');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        field.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+// Password strength indicator
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordField = document.getElementById('{{ form.password1.id_for_label }}');
+    const strengthBar = document.getElementById('password-strength');
+    
+    if (passwordField && strengthBar) {
+        passwordField.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            
+            if (password.length >= 8) strength += 25;
+            if (password.length >= 12) strength += 25;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength += 25;
+            if (/[0-9]/.test(password)) strength += 15;
+            if (/[^a-zA-Z0-9]/.test(password)) strength += 10;
+            
+            strengthBar.style.width = strength + '%';
+            
+            if (strength < 30) {
+                strengthBar.style.background = '#dc3545';
+            } else if (strength < 60) {
+                strengthBar.style.background = '#ffc107';
+            } else if (strength < 80) {
+                strengthBar.style.background = '#0dcaf0';
+            } else {
+                strengthBar.style.background = '#198754';
+            }
+        });
+    }
+});
 </script>
 {% endblock %}

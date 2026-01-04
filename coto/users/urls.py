@@ -1,68 +1,72 @@
-import django.contrib.auth.views as auth_views
 from django.urls import path
+from django.views.generic import TemplateView
 
 from users import views
 
 app_name = "users"
 
 urlpatterns = [
+    # Authentication
+    path("login/", views.CustomLoginView.as_view(), name="login"),
+    path("logout/", views.CustomLogoutView.as_view(), name="logout"),
+    # Registration
     path("signup/", views.SignupView.as_view(), name="signup"),
     path(
-        "activate/<str:username>/",
+        "signup/complete/",
+        views.SignupCompleteView.as_view(),
+        name="signup-complete",
+    ),
+    path(
+        "activate/<uidb64>/<token>/",
         views.ActivateUserView.as_view(),
         name="activate",
     ),
+    path(
+        "resend-activation/",
+        views.ResendActivationView.as_view(),
+        name="resend-activation",
+    ),
+    # Profile
     path("profile/", views.ProfileView.as_view(), name="profile"),
+    # Password Change
     path(
-        "login/",
-        auth_views.LoginView.as_view(template_name="users/login.html"),
-        name="login",
-    ),
-    path(
-        "logout/",
-        auth_views.LogoutView.as_view(template_name="users/logout.html"),
-        name="logout",
-    ),
-    path(
-        "password_change/",
-        auth_views.PasswordChangeView.as_view(
-            template_name="users/password_change.html",
-        ),
+        "password-change/",
+        views.CustomPasswordChangeView.as_view(),
         name="password-change",
     ),
     path(
-        "password_change/done/",
-        auth_views.PasswordChangeDoneView.as_view(
-            template_name="users/password_change_done.html",
-        ),
+        "password-change/done/",
+        views.CustomPasswordChangeDoneView.as_view(),
         name="password-change-done",
     ),
+    # Password Reset
     path(
-        "password_reset/",
-        auth_views.PasswordResetView.as_view(
-            template_name="users/password_reset.html",
-        ),
+        "password-reset/",
+        views.CustomPasswordResetView.as_view(),
         name="password-reset",
     ),
     path(
-        "password_reset/done/",
-        auth_views.PasswordResetDoneView.as_view(
-            template_name="users/password_reset_done.html",
-        ),
+        "password-reset/done/",
+        views.CustomPasswordResetDoneView.as_view(),
         name="password-reset-done",
     ),
     path(
-        "reset/<uidb64>/<token>/",
-        auth_views.PasswordResetConfirmView.as_view(
-            template_name="users/password_reset_confirm.html",
-        ),
+        "password-reset/<uidb64>/<token>/",
+        views.CustomPasswordResetConfirmView.as_view(),
         name="password-reset-confirm",
     ),
     path(
-        "reset/done/",
-        auth_views.PasswordResetCompleteView.as_view(
-            template_name="users/password_reset_complete.html",
-        ),
+        "password-reset/complete/",
+        views.CustomPasswordResetCompleteView.as_view(),
         name="password-reset-complete",
+    ),
+    # Terms and Conditions
+    path(
+        "terms/",
+        TemplateView.as_view(
+            template_name="users/terms.html",
+            extra_context={"current_date": "2026-01-04"},
+        ),
+        name="terms",
     ),
 ]

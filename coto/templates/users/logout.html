@@ -1,9 +1,61 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load static %}
+
+{% block title %}Выход выполнен - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .auth-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        box-shadow: var(--shadow-md);
+        max-width: 480px;
+        width: 100%;
+        margin: 0 1rem;
+        text-align: center;
+    }
+    
+    .logout-icon {
+        font-size: 5rem;
+        color: var(--text-secondary);
+        margin: 2rem 0 1rem;
+    }
+    
+    .auth-body {
+        padding: 2rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="text-white">
-  <h2>{% trans "You have been logged out" %}</h2>
-  <p><a href="{% url 'users:login' %}">{% trans "Login again" %}</a></p>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-body">
+            <i class="bi bi-box-arrow-right logout-icon"></i>
+            <h1 class="h2 mb-3">Вы вышли из системы</h1>
+            <p class="text-muted mb-4">
+                Спасибо за посещение. Надеемся скоро увидеть вас снова!
+            </p>
+            <div>
+                <a href="{% url 'users:login' %}" class="btn btn-primary me-2 mb-2">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                    Войти снова
+                </a>
+                <a href="{% url 'homepage:homepage' %}" class="btn btn-secondary mb-2">
+                    <i class="bi bi-house-fill me-2"></i>
+                    На главную
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

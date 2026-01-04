@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Регистрация завершена - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .auth-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        box-shadow: var(--shadow-md);
+        max-width: 520px;
+        width: 100%;
+        margin: 0 1rem;
+        text-align: center;
+    }
+    
+    .success-icon {
+        font-size: 5rem;
+        color: var(--accent-success);
+        margin: 2rem 0 1rem;
+    }
+    
+    .auth-body {
+        padding: 2rem;
+    }
+    
+    .info-box {
+        background-color: var(--bg-secondary);
+        border-left: 4px solid var(--accent-primary);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1.5rem 0;
+        text-align: left;
+    }
+    
+    .info-box ul {
+        margin-bottom: 0;
+        padding-left: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-body">
+            <i class="bi bi-envelope-check-fill success-icon"></i>
+            <h1 class="h2 mb-3">Проверьте свою почту!</h1>
+            <p class="text-muted mb-3">
+                Спасибо за регистрацию! Мы отправили ссылку активации на ваш email адрес.
+            </p>
+            
+            <div class="info-box">
+                <p class="mb-2"><strong>Следующие шаги:</strong></p>
+                <ul class="small">
+                    <li>Проверьте вашу почту (и папку "Спам")</li>
+                    <li>Нажмите на ссылку активации в письме</li>
+                    <li>Начните пользоваться аккаунтом!</li>
+                </ul>
+            </div>
+            
+            <p class="text-muted small mb-4">
+                Ссылка активации действительна 24 часа. Если письмо не пришло, вы можете запросить новое.
+            </p>
+            
+            <a href="{% url 'users:resend-activation' %}" class="btn btn-primary">
+                <i class="bi bi-arrow-clockwise me-2"></i>
+                Отправить письмо повторно
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

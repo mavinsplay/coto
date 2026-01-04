@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Сброс пароля - {{ block.super }}{% endblock %}
+{% block title %}Повторная отправка активации - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -51,28 +51,6 @@
         padding: 2rem;
     }
     
-    .form-floating {
-        margin-bottom: 1rem;
-    }
-    
-    
-    .auth-footer {
-        text-align: center;
-        padding-top: 1rem;
-        border-top: 1px solid var(--bs-border-color);
-    }
-    
-    .auth-link {
-        color: var(--accent-primary);
-        text-decoration: none;
-        font-weight: 600;
-    }
-    
-    .auth-link:hover {
-        color: var(--accent-primary-hover);
-        text-decoration: underline;
-    }
-    
     .info-box {
         background-color: var(--bg-secondary);
         border-left: 4px solid var(--accent-primary);
@@ -86,6 +64,23 @@
         font-size: 0.9rem;
         color: var(--text-secondary);
     }
+    
+    .auth-footer {
+        text-align: center;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .auth-link {
+        color: var(--accent-primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .auth-link:hover {
+        color: var(--accent-primary-hover);
+        text-decoration: underline;
+    }
 </style>
 {% endblock %}
 
@@ -93,9 +88,9 @@
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
-            <i class="bi bi-key-fill"></i>
-            <h1>Сброс пароля</h1>
-            <p>Мы отправим вам инструкции для сброса</p>
+            <i class="bi bi-arrow-clockwise"></i>
+            <h1>Повторная активация</h1>
+            <p>Получите новую ссылку активации</p>
         </div>
         
         <div class="auth-body">
@@ -103,7 +98,7 @@
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                         {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
                     </div>
                 {% endfor %}
             {% endif %}
@@ -111,7 +106,7 @@
             <div class="info-box">
                 <p>
                     <i class="bi bi-info-circle me-2"></i>
-                    Введите ваш email адрес, и мы отправим вам ссылку для сброса пароля.
+                    Введите ваш email адрес, и мы отправим новую ссылку активации.
                 </p>
             </div>
             
@@ -132,7 +127,7 @@
                 
                 <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-send-fill me-2"></i>
-                    Отправить ссылку для сброса
+                    Отправить ссылку активации
                 </button>
             </form>
             
@@ -142,10 +137,6 @@
                         <i class="bi bi-arrow-left me-1"></i>
                         Вернуться к входу
                     </a>
-                </p>
-                <p class="mb-0 text-muted small">
-                    Нет аккаунта?
-                    <a href="{% url 'users:signup' %}" class="auth-link">Зарегистрироваться</a>
                 </p>
             </div>
         </div>

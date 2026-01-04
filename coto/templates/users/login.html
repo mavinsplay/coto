@@ -1,91 +1,269 @@
 {% extends "base.html" %}
 {% load static %}
-{% load i18n %}
 
-{% block title %}
-  {{ title }}
-{% endblock title %}
+{% block title %}Вход - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .auth-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        box-shadow: var(--shadow-md);
+        max-width: 480px;
+        width: 100%;
+        margin: 0 1rem;
+    }
+    
+    .auth-header {
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .auth-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--text-primary);
+    }
+    
+    .auth-header p {
+        color: var(--text-secondary);
+        margin: 0.5rem 0 0 0;
+    }
+    
+    .auth-body {
+        padding: 2rem;
+    }
+    
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+    
+    .password-toggle {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 0.5rem;
+        z-index: 10;
+    }
+    
+    .password-toggle:hover {
+        color: var(--accent-primary);
+    }
+    
+    .divider {
+        text-align: center;
+        margin: 1.5rem 0;
+        position: relative;
+    }
+    
+    .divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--border-color);
+    }
+    
+    .divider span {
+        background: var(--bg-card);
+        padding: 0 1rem;
+        position: relative;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    
+    .auth-footer {
+        text-align: center;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .auth-link {
+        color: var(--accent-primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .auth-link:hover {
+        color: var(--accent-primary-hover);
+        text-decoration: underline;
+    }
+    
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-check-input {
+        width: 1.125rem;
+        height: 1.125rem;
+        margin: 0;
+        border: 2px solid var(--border-color);
+        border-radius: 0.25rem;
+        cursor: pointer;
+        background-color: var(--bg-card);
+        flex-shrink: 0;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--accent-primary);
+        border-color: var(--accent-primary);
+    }
+    
+    .form-check-input:checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 0.875rem;
+        font-weight: bold;
+    }
+    
+    .form-check-input:hover {
+        border-color: var(--accent-primary);
+    }
+    
+    .form-check-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.25rem rgba(66, 39, 102, 0.25);
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        user-select: none;
+        margin: 0;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-md mt-5">
-  <div class="d-flex justify-content-center align-items-center">
-    <div class="card coto-secondary rounded rounded-5 coto-login mt-5">
-      <div class="card-body">
-        <div class="col">
-
-          <p class="text-center h2 mx-1 mt-4">{% trans "Login" %}</p>
-
-          <div class="mx-1 mx-md-4">
-          {% if form.non_field_errors %}
-          {% for error in form.non_field_errors %}
-          <p class="alert alert-danger">
-              {{ error }}
-          </p>
-          {% endfor %}
-          {% endif %}
-          </div>
-          {% if messages %}
-            <div class="messages">
-              {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} message text-center" role="alert">
-                  {{ message }}
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
-
-          <form method="post" class="mx-1 mx-md-4 mt-4">
-            {% csrf_token %}
-
-            <div class="d-flex flex-row align-items-center mb-4">
-              <i class="bi bi-person-fill me-2"></i>
-              <div data-mdb-input-init class="form-outline flex-fill mb-0">
-                <input type="text" id="id_username" name="username" class="form-control" placeholder="{% trans 'login_or_email_placeholder' %}" required>
-                {% for error in form.username.errors %}
-                  <div class="text-danger">{{ error }}</div>
-                {% endfor %}
-              </div>
-            </div>
-
-            <div class="d-flex flex-row align-items-center mb-2 position-relative">
-              <i class="bi bi-key-fill me-2"></i>
-              <div data-mdb-input-init class="form-outline flex-fill mb-0">
-                <input type="password" id="id_password" name="password" class="form-control" placeholder="{% trans 'password_placeholder' %}" required>
-                {% for error in form.password.errors %}
-                  <div class="text-danger">{{ error }}</div>
-                {% endfor %}
-              </div>
-              <button type="button" class="btn justify-content-end align-start-0 position-absolute end-0 top-0" onclick="togglePasswordVisibility('id_password', 'pwd_toggle')">
-                <i id="pwd_toggle" class="bi bi-eye"></i>
-              </button>
-            </div>
-
-            <div class="d-flex justify-content-center align-items-center mb-3 mt-3">
-              <a class="coto-font-medium" href="{% url "users:password-reset" %}">{% trans "Forgot password?" %}</a>
-            </div>
-
-            <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4">
-              <button type="submit" class="btn coto-primary coto-btn btn-lg">{% trans "Login_confirm" %}</button>
-            </div>
-          </form>
-
-          <div class="d-flex justify-content-center align-items-center">
-            <p class="coto-font-medium"> {% trans "Don't have an account?" %} <a href="{% url 'users:signup' %}">{% trans "Sign up" %}</a></p>
-          </div>
-
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>С возвращением!</h1>
+            <p>Войдите в свой аккаунт</p>
         </div>
-      </div>
+        
+        <div class="auth-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                </div>
+            {% endif %}
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <div class="form-floating">
+                        {{ form.username }}
+                        <label for="{{ form.username.id_for_label }}">Логин или Email</label>
+                    </div>
+                    {% if form.username.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.username.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-floating position-relative">
+                        {{ form.password }}
+                        <label for="{{ form.password.id_for_label }}">Пароль</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword('{{ form.password.id_for_label }}', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.password.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        {{ form.remember_me }}
+                        <label class="form-check-label" for="{{ form.remember_me.id_for_label }}">
+                            Запомнить меня
+                        </label>
+                    </div>
+                    <a href="{% url 'users:password-reset' %}" class="auth-link small">
+                        Забыли пароль?
+                    </a>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                    Войти
+                </button>
+            </form>
+            
+            <div class="divider">
+                <span>или</span>
+            </div>
+            
+            <div class="auth-footer">
+                <p class="mb-0">
+                    Нет аккаунта?
+                    <a href="{% url 'users:signup' %}" class="auth-link">Зарегистрироваться</a>
+                </p>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
-  function togglePasswordVisibility(inputId, iconId) {
-    const input = document.getElementById(inputId);
-    const icon = document.getElementById(iconId);
-    const type = input.type === 'password' ? 'text' : 'password';
-    input.type = type;
-    icon.className = type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
-  }
+function togglePassword(fieldId, button) {
+    const field = document.getElementById(fieldId);
+    const icon = button.querySelector('i');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        field.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
 </script>
 {% endblock %}
