@@ -12,6 +12,19 @@
             {% trans "Комнаты для совместного просмотра" %}
         </h1>
         <p class="text-muted lead">Выберите комнату или создайте свою</p>
+        
+        {% if user.is_authenticated %}
+        <div class="d-flex gap-2 justify-content-center mt-4">
+            <a href="{% url 'rooms:create' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle me-2"></i>
+                {% trans "Создать комнату" %}
+            </a>
+            <a href="{% url 'rooms:join_private' %}" class="btn btn-outline-warning btn-lg">
+                <i class="bi bi-key me-2"></i>
+                {% trans "Войти по коду" %}
+            </a>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Rooms Grid -->
@@ -52,7 +65,12 @@
                     <div class="mb-3 flex-grow-1">
                         <p class="card-text mb-2">
                             <i class="bi bi-film me-2 text-primary"></i>
+                            {% if room.video %}
                             <strong>{{ room.video.title }}</strong>
+                            {% elif room.playlist %}
+                            <strong>{{ room.playlist.title }}</strong>
+                            <span class="badge bg-info ms-2">Плейлист</span>
+                            {% endif %}
                         </p>
                         <p class="card-text text-muted small mb-0">
                             <i class="bi bi-person-circle me-2"></i>
@@ -63,7 +81,21 @@
                     <!-- Action Buttons -->
                     <div class="d-flex gap-2 mt-auto">
                         {% if user.is_authenticated %}
-                            {% if user in room.participants.all %}
+                            {% if user == room.host %}
+                                <!-- Host controls -->
+                                <a href="{% url 'rooms:detail' room.pk %}" class="btn btn-primary flex-fill">
+                                    <i class="bi bi-arrow-right-circle me-1"></i>
+                                    {% trans "Открыть" %}
+                                </a>
+                                <div class="btn-group">
+                                    <a href="{% url 'rooms:update' room.pk %}" class="btn btn-warning" title="Редактировать">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'rooms:delete' room.pk %}" class="btn btn-outline-danger" title="Удалить">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            {% elif user in room.participants.all %}
                                 <form method="post" action="{% url 'rooms:leave' room.pk %}" class="flex-fill">
                                     {% csrf_token %}
                                     <button class="btn btn-danger w-100" type="submit">

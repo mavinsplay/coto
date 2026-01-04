@@ -58,6 +58,14 @@
               {% trans "Комнаты" %}
             </a>
           </li>
+          {% if request.user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url "rooms:manage" %}">
+              <i class="bi bi-sliders me-2"></i>
+              {% trans "Мои комнаты" %}
+            </a>
+          </li>
+          {% endif %}
           
           {% if request.user.is_authenticated and request.user.is_staff %}
           <li class="nav-item mt-2">

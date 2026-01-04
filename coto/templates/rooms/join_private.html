@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <!-- Header -->
+            <div class="text-center mb-5 fade-in">
+                <div class="mb-4">
+                    <i class="bi bi-shield-lock display-1 text-warning"></i>
+                </div>
+                <h1 class="display-4 fw-bold mb-3">
+                    {% trans "Приватная комната" %}
+                </h1>
+                <p class="text-muted lead">{% trans "Введите код доступа для присоединения" %}</p>
+            </div>
+
+            <!-- Form Card -->
+            <div class="card shadow-lg border-0 fade-in" style="animation-delay: 0.1s;">
+                <div class="card-body p-5">
+                    <form method="post" id="join-private-form">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            {{ form.non_field_errors }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label for="{{ form.access_code.id_for_label }}" class="form-label fw-bold text-center d-block mb-3">
+                                <i class="bi bi-key-fill me-2 text-warning"></i>
+                                {{ form.access_code.label }}
+                            </label>
+                            {{ form.access_code }}
+                            {% if form.access_code.errors %}
+                            <div class="invalid-feedback d-block text-center mt-2">
+                                {{ form.access_code.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted d-block text-center mt-2">
+                                {% trans "Код можно получить у организатора комнаты" %}
+                            </small>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-3 mt-4">
+                            <button type="submit" class="btn btn-warning btn-lg fw-bold">
+                                <i class="bi bi-unlock-fill me-2"></i>
+                                {% trans "Войти в комнату" %}
+                            </button>
+                            <a href="{% url 'rooms:list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                {% trans "Назад к списку" %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info Section -->
+            <div class="card border-0 bg-light mt-4 fade-in" style="animation-delay: 0.2s;">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3">
+                        <i class="bi bi-info-circle-fill text-info me-2"></i>
+                        {% trans "О приватных комнатах" %}
+                    </h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            {% trans "Приватные комнаты не отображаются в общем списке" %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            {% trans "Только люди с кодом доступа могут присоединиться" %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            {% trans "Код защищает вашу комнату от незваных гостей" %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.6s ease forwards;
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#{{ form.access_code.id_for_label }} {
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 1rem;
+    text-align: center;
+    letter-spacing: 0.3em;
+}
+
+#{{ form.access_code.id_for_label }}:focus {
+    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25);
+    border-color: #ffc107;
+}
+
+.btn-warning {
+    transition: all 0.3s ease;
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const accessCodeInput = document.getElementById('{{ form.access_code.id_for_label }}');
+    
+    // Auto-uppercase input
+    accessCodeInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+    
+    // Focus on load
+    accessCodeInput.focus();
+});
+</script>
+{% endblock %}

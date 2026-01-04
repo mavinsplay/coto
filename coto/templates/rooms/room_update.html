@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="text-center mb-5 fade-in">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    {% trans "Редактировать комнату" %}
+                </h1>
+                <p class="text-muted lead">{{ room.name }}</p>
+            </div>
+
+            <!-- Form Card -->
+            <div class="card shadow-lg border-0 fade-in" style="animation-delay: 0.1s;">
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" enctype="multipart/form-data" id="room-update-form">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            {{ form.non_field_errors }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+
+                        <!-- Room Name -->
+                        <div class="mb-4">
+                            <label for="{{ form.name.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-card-heading me-2 text-primary"></i>
+                                {{ form.name.label }}
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Content Type Display (readonly) -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-collection-play me-2 text-primary"></i>
+                                {% trans "Контент комнаты" %}
+                            </label>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                {% if room.video %}
+                                    <strong>Видео:</strong> {{ room.video.title }}
+                                {% elif room.playlist %}
+                                    <strong>Плейлист:</strong> {{ room.playlist.title }}
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">{% trans "Тип контента нельзя изменить после создания" %}</small>
+                            </div>
+                        </div>
+
+                        <!-- Current Room Image -->
+                        {% if room.room_image %}
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-image me-2 text-primary"></i>
+                                {% trans "Текущее изображение" %}
+                            </label>
+                            <div class="mb-2">
+                                <img src="{{ room.room_image.url }}" alt="{{ room.name }}" 
+                                     class="img-thumbnail" style="max-height: 200px;">
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Room Image -->
+                        <div class="mb-4">
+                            <label for="{{ form.room_image.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-image me-2 text-primary"></i>
+                                {{ form.room_image.label }}
+                            </label>
+                            {{ form.room_image }}
+                            {% if form.room_image.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.room_image.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">{% trans "Загрузите новое изображение, чтобы заменить текущее" %}</small>
+                        </div>
+
+                        <!-- Participant Limit -->
+                        <div class="mb-4">
+                            <label for="{{ form.limit_participants.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-people me-2 text-primary"></i>
+                                {{ form.limit_participants.label }}
+                            </label>
+                            {{ form.limit_participants }}
+                            {% if form.limit_participants.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.limit_participants.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                {% trans "Текущее количество участников:" %} {{ room.participants.count }}
+                            </small>
+                        </div>
+
+                        <!-- Private Room Section -->
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">
+                                    <i class="bi bi-shield-lock me-2 text-warning"></i>
+                                    {% trans "Настройки приватности" %}
+                                </h5>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    {{ form.is_private }}
+                                    <label class="form-check-label" for="{{ form.is_private.id_for_label }}">
+                                        <strong>{{ form.is_private.label }}</strong>
+                                    </label>
+                                </div>
+
+                                {% if room.is_private and room.access_code %}
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-key me-2"></i>
+                                    <strong>{% trans "Код доступа:" %}</strong> 
+                                    <span class="fs-5 fw-bold font-monospace ms-2" style="letter-spacing: 0.2em;">
+                                        {{ room.access_code }}
+                                    </span>
+                                </div>
+                                {% endif %}
+
+                                <div id="private-options" {% if not room.is_private %}class="d-none"{% endif %}>
+                                    <div class="form-check mb-3">
+                                        {{ form.generate_code }}
+                                        <label class="form-check-label" for="{{ form.generate_code.id_for_label }}">
+                                            {{ form.generate_code.label }}
+                                        </label>
+                                    </div>
+
+                                    <div id="access-code-group">
+                                        <label for="{{ form.access_code.id_for_label }}" class="form-label fw-bold">
+                                            <i class="bi bi-key me-2"></i>
+                                            {{ form.access_code.label }}
+                                        </label>
+                                        {{ form.access_code }}
+                                        {% if form.access_code.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.access_code.errors }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+                            <a href="{% url 'rooms:detail' room.pk %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                {% trans "Отмена" %}
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="bi bi-check-circle me-2"></i>
+                                {% trans "Сохранить изменения" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.6s ease forwards;
+}
+
+.form-control, .form-select {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isPrivateCheck = document.getElementById('{{ form.is_private.id_for_label }}');
+    const privateOptions = document.getElementById('private-options');
+    const generateCodeCheck = document.getElementById('{{ form.generate_code.id_for_label }}');
+    const accessCodeInput = document.getElementById('{{ form.access_code.id_for_label }}');
+    
+    // Private room toggle
+    if (isPrivateCheck) {
+        isPrivateCheck.addEventListener('change', function() {
+            if (this.checked) {
+                privateOptions.classList.remove('d-none');
+            } else {
+                privateOptions.classList.add('d-none');
+            }
+        });
+    }
+    
+    // Auto-generate code toggle
+    if (generateCodeCheck) {
+        generateCodeCheck.addEventListener('change', function() {
+            if (this.checked) {
+                accessCodeInput.setAttribute('readonly', 'readonly');
+                accessCodeInput.value = '';
+                accessCodeInput.placeholder = '{% trans "Будет сгенерирован новый код" %}';
+            } else {
+                accessCodeInput.removeAttribute('readonly');
+                accessCodeInput.placeholder = '{% trans "Введите свой код" %}';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

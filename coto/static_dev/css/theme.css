@@ -341,6 +341,14 @@ body.loading * {
   background-color: var(--bg-primary);
 }
 
+#my-rooms {
+  background-color: var(--bg-primary) !important;
+}
+
+#roomTabsContent {
+  border: 0px !important;
+}
+
 /* ==========================================================================
     PLAYLIST
     ========================================================================== */

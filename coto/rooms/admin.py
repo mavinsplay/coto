@@ -14,13 +14,22 @@ class WatchPartyAdmin(admin.ModelAdmin):
         "video",
         "playlist",
         "host",
+        "is_private",
+        "get_access_code",
         "created_at",
         "get_thumbnail",
         "count_participants",
     )
-    list_filter = ("host", "created_at")
-    search_fields = ("name", "host__username", "video__title")
+    list_filter = ("host", "created_at", "is_private")
+    search_fields = (
+        "name",
+        "host__username",
+        "video__title",
+        "playlist__title",
+        "access_code",
+    )
     filter_horizontal = ("participants",)
+    readonly_fields = ("get_access_code_display",)
 
     def get_thumbnail(self, obj):
         if obj.room_image:
@@ -41,6 +50,37 @@ class WatchPartyAdmin(admin.ModelAdmin):
         return f"{count_participants} / {obj.limit_participants}"
 
     count_participants.short_description = _("количество участников")
+
+    def get_access_code(self, obj):
+        if obj.is_private and obj.access_code:
+            return format_html(
+                '<span style="background-color: #fff\
+                    3cd; padding: 4px 8px; border-radius: 4px; '
+                'font-weight: bold; font-family: monosp\
+                    ace; letter-spacing: 2px;">{}</span>',
+                obj.access_code,
+            )
+
+        return _("—")
+
+    get_access_code.short_description = _("Код доступа")
+
+    def get_access_code_display(self, obj):
+        if obj.is_private and obj.access_code:
+            return format_html(
+                '<div style="background-color: #fff3cd; padding: 12px; bo\
+                    rder-radius: 8px; '
+                "font-size: 24px; font-weight: bold; font-family: monosp\
+                    ace; letter-spacing: 4px; "
+                'text-align: center; margin: 10px 0;">{}</div>',
+                obj.access_code,
+            )
+
+        return _("Комната не является приватной")
+
+    get_access_code_display.short_description = _(
+        "Код доступа (для копирования)",
+    )
 
 
 @admin.register(ChatMessage)

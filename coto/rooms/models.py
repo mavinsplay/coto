@@ -54,6 +54,13 @@ class WatchParty(models.Model):
         verbose_name=_("Приватная"),
         default=False,
     )
+    access_code = models.CharField(
+        verbose_name=_("Код доступа"),
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text=_("Код для доступа к приватной комнате"),
+    )
     current_time = models.FloatField(_("Текущее время видео"), default=0.0)
     created_at = models.DateTimeField(_("Создано"), auto_now_add=True)
 
@@ -68,6 +75,9 @@ class WatchParty(models.Model):
     def clean(self):
         """Проверяем, что выбрано либо видео, либо плейлист, но не оба."""
         from django.core.exceptions import ValidationError
+
+        if self.pk is None:
+            return
 
         if not self.video and not self.playlist:
             raise ValidationError(_("Выберите либо видео, либо плейлист."))

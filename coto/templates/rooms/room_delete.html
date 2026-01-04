@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <!-- Header -->
+            <div class="text-center mb-5 fade-in">
+                <div class="mb-4">
+                    <i class="bi bi-exclamation-triangle display-1 text-danger"></i>
+                </div>
+                <h1 class="display-5 fw-bold mb-3">
+                    {% trans "Удалить комнату?" %}
+                </h1>
+                <p class="text-muted lead">{% trans "Это действие нельзя отменить" %}</p>
+            </div>
+
+            <!-- Room Info Card -->
+            <div class="card shadow-lg border-danger fade-in mb-4" style="animation-delay: 0.1s;">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {% trans "Информация о комнате" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>{% trans "Название:" %}</strong> {{ room.name }}
+                    </div>
+                    
+                    {% if room.room_image %}
+                    <div class="mb-3">
+                        <img src="{{ room.room_image.url }}" alt="{{ room.name }}" 
+                             class="img-thumbnail" style="max-height: 150px;">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <strong>{% trans "Контент:" %}</strong>
+                        {% if room.video %}
+                            {{ room.video.title }}
+                        {% elif room.playlist %}
+                            {{ room.playlist.title }} ({% trans "Плейлист" %})
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>{% trans "Участников:" %}</strong> 
+                        {{ room.participants.count }} / {{ room.limit_participants }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>{% trans "Создана:" %}</strong> {{ room.created_at|date:"d.m.Y H:i" }}
+                    </div>
+                    
+                    {% if room.is_private %}
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-shield-lock me-2"></i>
+                        <strong>{% trans "Приватная комната" %}</strong>
+                        {% if room.access_code %}
+                        <br>{% trans "Код доступа:" %} {{ room.access_code }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Warning Box -->
+            <div class="alert alert-danger fade-in" style="animation-delay: 0.2s;">
+                <h6 class="alert-heading">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    {% trans "Внимание!" %}
+                </h6>
+                <ul class="mb-0">
+                    <li>{% trans "Комната будет удалена навсегда" %}</li>
+                    <li>{% trans "Все участники будут отключены" %}</li>
+                    <li>{% trans "История чата будет удалена" %}</li>
+                    <li>{% trans "Это действие необратимо" %}</li>
+                </ul>
+            </div>
+
+            <!-- Confirmation Form -->
+            <form method="post" class="fade-in" style="animation-delay: 0.3s;">
+                {% csrf_token %}
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                    <a href="{% url 'rooms:detail' room.pk %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        {% trans "Отмена" %}
+                    </a>
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="bi bi-trash me-2"></i>
+                        {% trans "Да, удалить комнату" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.6s ease forwards;
+}
+
+.btn-danger {
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+</style>
+{% endblock %}

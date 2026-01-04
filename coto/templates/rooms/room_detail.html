@@ -48,7 +48,19 @@
       <!-- Action Buttons -->
       <div class="d-grid gap-2 mt-3">
         {% if user.is_authenticated %}
-          {% if user in room.participants.all %}
+          {% if user == room.host %}
+            <!-- Host controls -->
+            <div class="btn-group" role="group">
+              <a href="{% url 'rooms:update' room.pk %}" class="btn btn-warning btn-lg">
+                <i class="bi bi-pencil me-2"></i>
+                Редактировать
+              </a>
+              <a href="{% url 'rooms:delete' room.pk %}" class="btn btn-outline-danger btn-lg">
+                <i class="bi bi-trash me-2"></i>
+                Удалить
+              </a>
+            </div>
+          {% elif user in room.participants.all %}
             <form method="post" action="{% url 'rooms:leave' room.pk %}">
               {% csrf_token %}
               <button class="btn btn-outline-danger btn-lg w-100" type="submit">
