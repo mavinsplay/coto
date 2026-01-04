@@ -52,6 +52,14 @@
               {% trans "Загрузить видео" %}
             </a>
           </li>
+          {% if request.user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url "videos:list" %}">
+              <i class="bi bi-collection-play me-2"></i>
+              {% trans "Мои видео" %}
+            </a>
+          </li>
+          {% endif %}
           <li class="nav-item">
             <a class="nav-link" href="{% url "rooms:list" %}">
               <i class="bi bi-door-open me-2"></i>

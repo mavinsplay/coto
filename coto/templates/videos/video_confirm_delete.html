@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Удалить видео" %} - {{ video.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/videos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <!-- Навигация -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="{% url 'videos:list' %}">
+              <i class="bi bi-collection-play"></i> {% trans "Мои видео" %}
+            </a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="{% url 'videos:detail' video.pk %}">{{ video.title }}</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">{% trans "Удалить" %}</li>
+        </ol>
+      </nav>
+
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+          <h3 class="mb-0">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            {% trans "Подтверждение удаления" %}
+          </h3>
+        </div>
+        <div class="card-body">
+          {% if video.thumbnail %}
+          <div class="text-center mb-3">
+            <img src="{{ video.thumbnail.url }}" alt="{{ video.title }}" class="img-thumbnail" style="max-width: 200px;">
+          </div>
+          {% endif %}
+          
+          <p class="lead text-center">
+            {% trans "Вы действительно хотите удалить это видео?" %}
+          </p>
+          
+          <div class="alert alert-warning" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>{% trans "Внимание!" %}</strong>
+            {% trans "Это действие нельзя отменить. Все файлы, связанные с этим видео (включая HLS сегменты), будут безвозвратно удалены." %}
+          </div>
+
+          <div class="mb-3">
+            <strong>{% trans "Название:" %}</strong> {{ video.title }}
+          </div>
+          
+          {% if video.description %}
+          <div class="mb-3">
+            <strong>{% trans "Описание:" %}</strong> {{ video.description|truncatewords:20 }}
+          </div>
+          {% endif %}
+          
+          <div class="mb-3">
+            <strong>{% trans "Дата загрузки:" %}</strong> {{ video.created_at|date:"d.m.Y H:i" }}
+          </div>
+
+          <form method="post" class="mt-4">
+            {% csrf_token %}
+            <div class="d-flex justify-content-between gap-2">
+              <a href="{% url 'videos:detail' video.pk %}" class="btn btn-secondary flex-fill">
+                <i class="bi bi-arrow-left me-1"></i>
+                {% trans "Отмена" %}
+              </a>
+              <button type="submit" class="btn btn-danger flex-fill">
+                <i class="bi bi-trash me-1"></i>
+                {% trans "Да, удалить видео" %}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

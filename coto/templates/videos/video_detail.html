@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ video.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/videos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    <div class="col-12">
+      <!-- Навигация назад -->
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="{% url 'videos:list' %}">
+              <i class="bi bi-collection-play"></i> {% trans "Мои видео" %}
+            </a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">{{ video.title }}</li>
+        </ol>
+      </nav>
+
+      <!-- Основная информация о видео -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              {% if video.thumbnail %}
+                <img src="{{ video.thumbnail.url }}" class="img-fluid rounded" alt="{{ video.title }}">
+              {% else %}
+                <div class="video-placeholder rounded">
+                  <i class="bi bi-film"></i>
+                </div>
+              {% endif %}
+            </div>
+            
+            <div class="col-md-8">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <h1 class="h2">{{ video.title }}</h1>
+                <div class="btn-group">
+                  <a href="{% url 'videos:edit' video.pk %}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil"></i> {% trans "Редактировать" %}
+                  </a>
+                  <a href="{% url 'videos:delete' video.pk %}" class="btn btn-outline-danger">
+                    <i class="bi bi-trash"></i> {% trans "Удалить" %}
+                  </a>
+                </div>
+              </div>
+              
+              {% if video.description %}
+              <div class="mb-3">
+                <h5>{% trans "Описание" %}</h5>
+                <p class="text-muted">{{ video.description }}</p>
+              </div>
+              {% endif %}
+              
+              <!-- Статус обработки -->
+              <div class="mb-3">
+                <h5>{% trans "Статус обработки" %}</h5>
+                <div class="d-flex align-items-center">
+                  {% if video.hls_status == "done" or video.hls_status == "completed" %}
+                    <span class="badge bg-success me-2">
+                      <i class="bi bi-check-circle-fill"></i> {% trans "Завершено" %}
+                    </span>
+                  {% elif video.hls_status == "processing" or video.hls_status == "pending" %}
+                    <span class="badge bg-primary me-2">
+                      <i class="bi bi-hourglass-split"></i> {% trans "Обрабатывается" %}
+                    </span>
+                  {% elif video.hls_status == "failed" or video.hls_status == "error" %}
+                    <span class="badge bg-danger me-2">
+                      <i class="bi bi-x-circle-fill"></i> {% trans "Ошибка" %}
+                    </span>
+                  {% else %}
+                    <span class="badge bg-secondary me-2">
+                      <i class="bi bi-clock"></i> {% trans "Ожидает обработки" %}
+                    </span>
+                  {% endif %}
+                  
+                  {% if video.hls_progress > 0 and video.hls_progress < 100 %}
+                    <span class="text-muted">{{ video.hls_progress }}%</span>
+                  {% endif %}
+                </div>
+                
+                <!-- Прогресс-бар -->
+                {% if video.hls_progress > 0 and video.hls_progress < 100 %}
+                <div class="progress mt-2" style="height: 20px;">
+                  <div 
+                    class="progress-bar progress-bar-striped progress-bar-animated" 
+                    role="progressbar" 
+                    style="width: {{ video.hls_progress }}%;"
+                    aria-valuenow="{{ video.hls_progress }}" 
+                    aria-valuemin="0" 
+                    aria-valuemax="100"
+                  >
+                    {{ video.hls_progress }}%
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+              
+              <!-- Информация о файле -->
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    <strong>{% trans "Дата загрузки:" %}</strong>
+                    <span class="ms-2">{{ video.created_at|date:"d.m.Y H:i" }}</span>
+                  </div>
+                </div>
+                
+                {% if video.duration %}
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <i class="bi bi-clock me-2"></i>
+                    <strong>{% trans "Длительность:" %}</strong>
+                    <span class="ms-2">{{ video.duration }}</span>
+                  </div>
+                </div>
+                {% endif %}
+                
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <i class="bi bi-file-earmark me-2"></i>
+                    <strong>{% trans "Размер файла:" %}</strong>
+                    <span class="ms-2">{{ file_size_display }}</span>
+                  </div>
+                </div>
+                
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <i class="bi bi-person me-2"></i>
+                    <strong>{% trans "Загрузил:" %}</strong>
+                    <span class="ms-2">{{ video.uploaded_by.username }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Техническая информация -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-gear me-2"></i>
+            {% trans "Техническая информация" %}
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <strong>{% trans "Путь к файлу:" %}</strong>
+              <p class="text-muted small mb-0">{{ video.file.name }}</p>
+            </div>
+            
+            {% if video.hls_manifest %}
+            <div class="col-md-6">
+              <strong>{% trans "HLS манифест:" %}</strong>
+              <p class="text-muted small mb-0">{{ video.hls_manifest.name }}</p>
+            </div>
+            {% endif %}
+            
+            {% if video.hls_log %}
+            <div class="col-12">
+              <strong>{% trans "Лог обработки:" %}</strong>
+              <pre class="bg-dark text-light p-3 rounded mt-2 small">{{ video.hls_log }}</pre>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Видеоплеер (если обработка завершена) -->
+      {% if video.hls_status == "done" or video.hls_status == "completed" %}
+        {% if video.hls_manifest %}
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-play-circle me-2"></i>
+              {% trans "Просмотр видео" %}
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="video-player-wrapper">
+              <video id="video-player" class="video-js vjs-big-play-centered" controls preload="auto" width="100%" height="auto">
+                <source src="{{ video.hls_manifest.url }}" type="application/x-mpegURL">
+                {% trans "Ваш браузер не поддерживает воспроизведение видео." %}
+              </video>
+            </div>
+          </div>
+        </div>
+        {% elif video.file %}
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-play-circle me-2"></i>
+              {% trans "Просмотр видео" %}
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="video-player-wrapper">
+              <video id="video-player" class="video-js vjs-big-play-centered" controls preload="auto" width="100%" height="auto">
+                <source src="{{ video.file.url }}" type="video/mp4">
+                {% trans "Ваш браузер не поддерживает воспроизведение видео." %}
+              </video>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if video.hls_status == "done" or video.hls_status == "completed" %}
+<link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.10.0/dist/videojs-http-streaming.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var player = videojs('video-player', {
+      controls: true,
+      autoplay: false,
+      preload: 'auto',
+      fluid: true,
+      responsive: true,
+      aspectRatio: '16:9'
+    });
+  });
+</script>
+{% endif %}
+{% endblock %}

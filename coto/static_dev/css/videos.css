@@ -1,0 +1,432 @@
+/* ==========================================================================
+   VIDEO MANAGEMENT STYLES
+   ========================================================================== */
+
+/* Stats Card */
+.stats-card {
+  border: none;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-theme);
+}
+
+.stat-item {
+  padding: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--accent-primary);
+}
+
+.stat-item h3 {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 2rem;
+}
+
+/* Filter Card */
+.filter-card {
+  border: none;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-theme);
+}
+
+.filter-card .form-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.filter-card .form-control,
+.filter-card .form-select {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  transition: var(--transition-theme);
+}
+
+.filter-card .form-control:focus,
+.filter-card .form-select:focus {
+  background-color: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 0.2rem rgba(66, 39, 102, 0.15);
+}
+
+/* Video Card */
+.video-card {
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background-color: var(--bg-card);
+}
+
+.video-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-primary);
+}
+
+.card-img-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 Aspect Ratio */
+  background-color: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.card-img-wrapper img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-img-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  color: var(--text-muted);
+}
+
+.card-img-placeholder i {
+  font-size: 4rem;
+  opacity: 0.3;
+}
+
+/* Status Badge */
+.status-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.status-badge i {
+  font-size: 0.875rem;
+}
+
+.status-completed,
+.status-done {
+  background-color: rgba(25, 135, 84, 0.9);
+  color: white;
+}
+
+.status-processing,
+.status-pending {
+  background-color: rgba(13, 110, 253, 0.9);
+  color: white;
+}
+
+.status-failed,
+.status-error {
+  background-color: rgba(220, 53, 69, 0.9);
+  color: white;
+}
+
+.status-awaiting-processing {
+  background-color: rgba(108, 117, 125, 0.9);
+  color: white;
+}
+
+/* Progress Bar */
+.progress {
+  background-color: var(--bg-tertiary);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background: linear-gradient(
+    90deg,
+    var(--accent-primary),
+    var(--accent-primary-hover)
+  );
+  transition: width 0.6s ease;
+}
+
+/* Card Content */
+.video-card .card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+  min-height: 2.8rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.video-card .card-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  min-height: 3.5rem;
+  color: var(--text-secondary);
+}
+
+.video-card .card-footer {
+  border-top: 1px solid var(--border-color);
+  padding: 0.75rem;
+}
+
+.video-card .btn-group .btn {
+  font-size: 0.875rem;
+  padding: 0.4rem 0.6rem;
+  border-color: var(--border-color);
+}
+
+.video-card .btn-outline-primary {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.video-card .btn-outline-primary:hover {
+  background-color: var(--accent-primary);
+  color: white;
+}
+
+.video-card .btn-outline-secondary {
+  color: var(--text-secondary);
+}
+
+.video-card .btn-outline-secondary:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.video-card .btn-outline-danger {
+  color: var(--accent-danger);
+  border-color: var(--accent-danger);
+}
+
+.video-card .btn-outline-danger:hover {
+  background-color: var(--accent-danger);
+  color: white;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.empty-state-icon {
+  font-size: 5rem;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  color: var(--text-primary);
+  margin-top: 1.5rem;
+  font-weight: 600;
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  margin-top: 1rem;
+  font-size: 1.1rem;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  background-color: var(--bg-secondary);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.breadcrumb-item a {
+  color: var(--accent-primary);
+  text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+  color: var(--accent-primary-hover);
+  text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+  color: var(--text-secondary);
+}
+
+/* Video Detail Page */
+.video-placeholder {
+  width: 100%;
+  padding-top: 56.25%;
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  position: relative;
+}
+
+.video-placeholder i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 5rem;
+  color: var(--text-muted);
+  opacity: 0.3;
+}
+
+.info-item {
+  padding: 0.75rem;
+  background-color: var(--bg-secondary);
+  border-radius: 0.5rem;
+  color: var(--text-primary);
+  transition: var(--transition-theme);
+}
+
+.info-item i {
+  color: var(--accent-primary);
+}
+
+.info-item strong {
+  color: var(--text-primary);
+}
+
+.info-item span {
+  color: var(--text-secondary);
+}
+
+/* Video Player */
+.video-player-wrapper {
+  background-color: #000;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.video-js {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+/* Form Styling */
+.card form .form-control,
+.card form .form-select,
+.card form textarea {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  transition: var(--transition-theme);
+}
+
+.card form .form-control:focus,
+.card form .form-select:focus,
+.card form textarea:focus {
+  background-color: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 0.2rem rgba(66, 39, 102, 0.15);
+}
+
+.card form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Pagination */
+.pagination {
+  margin-top: 2rem;
+}
+
+.pagination .page-link {
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  transition: var(--transition-theme);
+}
+
+.pagination .page-link:hover {
+  color: var(--accent-primary);
+  background-color: var(--bg-hover);
+  border-color: var(--accent-primary);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .video-card .card-title {
+    font-size: 1rem;
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+  }
+
+  .stat-item h3 {
+    font-size: 1.5rem;
+  }
+
+  .filter-card .btn-group {
+    flex-direction: column;
+  }
+
+  .empty-state-icon {
+    font-size: 3rem;
+  }
+}
+
+/* Animation */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.progress-bar-animated {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Dark theme specific adjustments */
+[data-bs-theme="dark"] .video-card {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+[data-bs-theme="dark"] .card-img-placeholder {
+  background: linear-gradient(135deg, #1a1a1a, #252525);
+}
+
+[data-bs-theme="dark"] pre {
+  background-color: #0d0d0d !important;
+  color: #e8e8e8 !important;
+}

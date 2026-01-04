@@ -11,6 +11,7 @@ urlpatterns = [
     path("auth/", include("users.urls")),
     path("auth/", include("django.contrib.auth.urls")),
     path("rooms/", include("rooms.urls")),
+    path("videos/", include("videos.urls")),
     path("chunked-upload/", include("upload.chunked_urls")),
 ]
 

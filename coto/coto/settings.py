@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     "users.apps.UsersConfig",
     "upload.apps.UploadConfig",
     "rooms.apps.RoomsConfig",
+    "videos.apps.VideosConfig",
 ]
 
 MIDDLEWARE = [
