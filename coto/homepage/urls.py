@@ -6,5 +6,5 @@ app_name = "homepage"
 
 urlpatterns = [
     path("", HomeView.as_view(), name="homepage"),
-    path("love/", LoveView.as_view(), name="homepage"),
+    path("love/", LoveView.as_view(), name="love"),
 ]
