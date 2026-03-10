@@ -9,18 +9,18 @@
   --bg-tertiary: #e9ecef;
   --bg-card: #ffffff;
   --bg-hover: #f1f3f5;
-  
+
   --text-primary: #212529;
   --text-secondary: #6c757d;
   --text-muted: #adb5bd;
-  
+
   --border-color: #dee2e6;
   --border-subtle: #e9ecef;
-  
+
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  
+
   --accent-primary: #422766;
   --accent-primary-hover: #2c1d3f;
   --accent-success: #198754;
@@ -28,7 +28,7 @@
   --accent-warning: #ffc107;
 
   --bs-primary-rgb: #422766;
-  
+
   /* Transitions */
   --transition-theme: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
@@ -40,20 +40,21 @@
   --bg-tertiary: #151515;
   --bg-card: #0d0d0d;
   --bg-hover: #1a1a1a;
-  
+
   --text-primary: #e8e8e8;
   --text-secondary: #a0a0a0;
   --text-muted: #707070;
-  
+
   --border-color: #2a2a2a;
   --border-subtle: #1a1a1a;
-  
+
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
-  
+
   --accent-primary: #422766;
-  --accent-primary-hover: #2c1d3f;;
+  --accent-primary-hover: #2c1d3f;
+  ;
   --accent-success: #26a641;
   --accent-danger: #f85149;
   --accent-warning: #d29922;
@@ -163,6 +164,63 @@ body.loading * {
 
 .theme-toggle i {
   font-size: 1.2rem;
+}
+
+/* Animated Hamburger Toggle */
+.toggle-animated-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.animated-hamburger {
+  width: 24px;
+  height: 18px;
+  position: relative;
+  display: inline-block;
+}
+
+.animated-hamburger span {
+  display: block;
+  position: absolute;
+  height: 2px;
+  width: 100%;
+  background-color: var(--text-primary);
+  border-radius: 9px;
+  opacity: 1;
+  left: 0;
+  transition: .25s ease-in-out;
+}
+
+.animated-hamburger span:nth-child(1) {
+  top: 0px;
+}
+
+.animated-hamburger span:nth-child(2) {
+  top: 8px;
+}
+
+.animated-hamburger span:nth-child(3) {
+  top: 16px;
+}
+
+/* When offcanvas is shown, Bootstrap adds tracking classes or aria-expanded=true to the button */
+.toggle-animated-btn[aria-expanded="true"] .animated-hamburger span:nth-child(1) {
+  top: 8px;
+  transform: rotate(135deg);
+}
+
+.toggle-animated-btn[aria-expanded="true"] .animated-hamburger span:nth-child(2) {
+  opacity: 0;
+  left: -10px;
+}
+
+.toggle-animated-btn[aria-expanded="true"] .animated-hamburger span:nth-child(3) {
+  top: 8px;
+  transform: rotate(-135deg);
 }
 
 /* ==========================================================================
@@ -401,6 +459,33 @@ body.loading * {
 }
 
 /* ==========================================================================
+    CUSTOM UTILITIES (HOVER, TRANSITIONS)
+    ========================================================================== */
+
+.transition-all {
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.hover-scale:hover {
+  transform: scale(1.03) !important;
+}
+
+.hover-bg-light:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.hover-bg-danger:hover {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  color: var(--accent-danger) !important;
+}
+
+.bg-gradient {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, #683db8 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* ==========================================================================
     DROPDOWN
     ========================================================================== */
 
@@ -501,6 +586,7 @@ body.loading * {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -520,11 +606,12 @@ body.loading * {
     width: 36px;
     height: 36px;
   }
-  
+
   .navbar-brand {
     font-size: 1.25rem;
   }
 }
+
 #chat-messages {
   border-bottom: 1px solid var(--bg-secondary) !important;
 }
@@ -537,9 +624,11 @@ body.loading * {
   background-color: var(--bg-secondary) !important;
   border-top: 1px solid var(--bg-secondary) !important;
 }
+
 .tab-pane {
   background: var(--bg-secondary) !important;
 }
+
 div.profile-dropdown {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);

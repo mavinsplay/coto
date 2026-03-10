@@ -44,13 +44,19 @@ class CustomLoginView(LoginView):
         """Handle successful login with remember me functionality"""
         remember_me = form.cleaned_data.get("remember_me", False)
 
+        # Call super() first to authenticate the user and log them in,
+        # which creates the session key.
+        response = super().form_valid(form)
+
         if not remember_me:
             # Session expires when browser closes
             self.request.session.set_expiry(0)
-            self.request.session.modified = True
         else:
             # Session expires after 2 weeks
             self.request.session.set_expiry(1209600)
+
+        # Ensure changes are saved
+        self.request.session.modified = True
 
         # Update last active date
         user = form.get_user()
@@ -63,9 +69,10 @@ class CustomLoginView(LoginView):
 
         messages.success(
             self.request,
-            _("Welcome back, %(username)s!") % {"username": user.username},
+            _("С возвращением, %(username)s!") % {"username": user.username},
         )
-        return super().form_valid(form)
+
+        return response # noqa
 
     def form_invalid(self, form):
         """Handle failed login attempts"""

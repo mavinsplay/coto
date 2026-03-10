@@ -1,156 +1,259 @@
 {% load i18n %}
 {% load static %}
-<nav class="navbar bg-body-tertiary">
+<nav class="navbar navbar-expand-lg bg-body-tertiary sticky-top">
   <div class="container-fluid">
-    <a class="navbar-brand" href="{% url "homepage:homepage" %}">
-      Coto
+    <!-- Brand -->
+    <a class="navbar-brand d-flex align-items-center" href="{% url 'homepage:homepage' %}">
+      <span class="fs-4 fw-bold">Coto</span>
     </a>
-    
-    <div class="d-flex align-items-center">
-      <!-- Theme Toggle Button -->
-      <button 
-        id="theme-toggle" 
-        class="theme-toggle" 
-        aria-label="Переключить тему"
-        title="Переключить тему"
-      >
+
+    <!-- Mobile Toggles Container (Right Side) -->
+    <div class="d-flex align-items-center d-lg-none">
+      <!-- Theme Toggle (Mobile) -->
+      <button id="theme-toggle-mobile" class="theme-toggle me-2" aria-label="Переключить тему" title="Переключить тему">
         <i class="bi bi-moon-stars-fill"></i>
       </button>
-      
+
       <!-- Hamburger Menu Button -->
-      <button 
-        class="navbar-toggler" 
-        type="button" 
-        data-bs-toggle="offcanvas" 
-        data-bs-target="#offcanvasNavbar" 
-        aria-controls="offcanvasNavbar" 
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
+      <button class="navbar-toggler border-0 px-2 toggle-animated-btn" type="button" data-bs-toggle="offcanvas"
+        data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+        <span class="animated-hamburger"><span></span><span></span><span></span></span>
       </button>
     </div>
-    
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-      <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasNavbarLabel">
-          Coto {% trans "Выберете страницу" %}
+
+    <!-- Desktop Navigation (Center & Right) -->
+    <div class="collapse navbar-collapse d-none d-lg-flex position-relative w-100" id="navbarNav">
+      <!-- Center Links -->
+      <ul class="navbar-nav position-absolute top-50 start-50 translate-middle flex-row gap-1 m-0 p-0">
+        <li class="nav-item">
+          <a class="nav-link px-3 py-2 rounded-pill fw-medium transition-all {% if request.resolver_match.view_name == 'homepage:homepage' %}active bg-primary bg-opacity-10 text-primary{% else %}hover-bg-light{% endif %}"
+            href="{% url 'homepage:homepage' %}">
+            <i class="bi bi-house-door d-lg-none me-2"></i>{% trans "Главная" %}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link px-3 py-2 rounded-pill fw-medium transition-all {% if request.resolver_match.view_name == 'upload:orientation' %}active bg-primary bg-opacity-10 text-primary{% else %}hover-bg-light{% endif %}"
+            href="{% url 'upload:orientation' %}">
+            <i class="bi bi-cloud-upload d-lg-none me-2"></i>{% trans "Загрузить" %}
+          </a>
+        </li>
+        {% if request.user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link px-3 py-2 rounded-pill fw-medium transition-all {% if request.resolver_match.view_name == 'videos:list' %}active bg-primary bg-opacity-10 text-primary{% else %}hover-bg-light{% endif %}"
+            href="{% url 'videos:list' %}">
+            <i class="bi bi-collection-play d-lg-none me-2"></i>{% trans "Мои видео" %}
+          </a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+          <a class="nav-link px-3 py-2 rounded-pill fw-medium transition-all {% if request.resolver_match.view_name == 'rooms:list' %}active bg-primary bg-opacity-10 text-primary{% else %}hover-bg-light{% endif %}"
+            href="{% url 'rooms:list' %}">
+            <i class="bi bi-door-open d-lg-none me-2"></i>{% trans "Комнаты" %}
+          </a>
+        </li>
+        {% if request.user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link px-3 py-2 rounded-pill fw-medium transition-all {% if request.resolver_match.view_name == 'rooms:manage' %}active bg-primary bg-opacity-10 text-primary{% else %}hover-bg-light{% endif %}"
+            href="{% url 'rooms:manage' %}">
+            <i class="bi bi-sliders d-lg-none me-2"></i>{% trans "Мои комнаты" %}
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+
+      <!-- Right Side Actions (Desktop) -->
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <!-- Theme Toggle (Desktop) -->
+        <button id="theme-toggle"
+          class="btn btn-light rounded-circle shadow-sm d-flex align-items-center justify-content-center transition-all hover-scale"
+          style="width: 40px; height: 40px;" aria-label="Переключить тему" title="Переключить тему">
+          <i class="bi bi-moon-stars-fill fs-5"></i>
+        </button>
+
+        <!-- User Profile / Login -->
+        {% if request.user.is_authenticated %}
+        {% if request.user.is_staff %}
+        <a class="btn btn-outline-primary shadow-sm hover-scale rounded-pill px-4" href="{% url 'admin:index' %}">
+          <i class="bi bi-gear-fill me-2 bg-gradient"></i>Админ
+        </a>
+        {% endif %}
+        <div class="dropdown profile-dropdown-desktop">
+          <button
+            class="btn btn-light dropdown-toggle d-flex align-items-center rounded-pill px-3 py-1 shadow-sm border transition-all hover-scale hover-bg-light"
+            type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {% if request.user.profile.get_small_avatar %}
+            <img src="{{ request.user.profile.get_small_avatar }}" class="rounded-circle me-2 object-fit-cover border"
+              style="width: 32px; height: 32px;" alt="{{ request.user.username }}">
+            {% else %}
+            <img src="{% static 'images/default_avatar.svg' %}" class="rounded-circle me-2 border bg-white"
+              style="width: 32px; height: 32px;" alt="Avatar">
+            {% endif %}
+            <span class="fw-bold px-1">{{ request.user.username }}</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 rounded-4 overflow-hidden">
+            <li>
+              <a class="dropdown-item py-3 px-4 fw-medium hover-bg-light transition-all {% if request.resolver_match.view_name == 'users:profile' %}active bg-primary bg-opacity-10 text-primary{% endif %}"
+                href="{% url 'users:profile' %}">
+                <i class="bi bi-person-circle me-3 fs-5 align-middle"></i>{% trans "Мой профиль" %}
+              </a>
+            </li>
+            <li>
+              <hr class="dropdown-divider m-0 opacity-25">
+            </li>
+            <li>
+              <a class="dropdown-item py-3 px-4 fw-medium text-danger hover-bg-danger transition-all"
+                href="{% url 'users:logout' %}">
+                <i class="bi bi-box-arrow-right me-3 fs-5 align-middle"></i>{% trans "Выйти" %}
+              </a>
+            </li>
+          </ul>
+        </div>
+        {% else %}
+        <a class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm transition-all hover-scale"
+          href="{% url 'users:login' %}">
+          <i class="bi bi-box-arrow-in-right me-2"></i>{% trans "Войти" %}
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Mobile Offcanvas Menu -->
+    <div class="offcanvas offcanvas-end d-lg-none" tabindex="-1" id="offcanvasNavbar"
+      aria-labelledby="offcanvasNavbarLabel">
+      <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title fw-bold" id="offcanvasNavbarLabel">
+          Coto
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
-      
-      <div class="offcanvas-body">
-        <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+
+      <div class="offcanvas-body d-flex flex-column">
+        <ul class="navbar-nav flex-grow-1 pe-3">
           <li class="nav-item">
-            <a class="nav-link" aria-current="page" href="{% url "homepage:homepage" %}">
-              <i class="bi bi-house-door me-2"></i>
-              {% trans "домашняя страница" %}
+            <a class="nav-link py-3 {% if request.resolver_match.view_name == 'homepage:homepage' %}active text-primary fw-medium rounded bg-body-tertiary{% endif %}"
+              href="{% url 'homepage:homepage' %}">
+              <i class="bi bi-house-door me-3 fs-5"></i>{% trans "Главная" %}
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{% url "upload:orientation" %}">
-              <i class="bi bi-cloud-upload me-2"></i>
-              {% trans "Загрузить видео" %}
-            </a>
-          </li>
-          {% if request.user.is_authenticated %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url "videos:list" %}">
-              <i class="bi bi-collection-play me-2"></i>
-              {% trans "Мои видео" %}
-            </a>
-          </li>
-          {% endif %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url "rooms:list" %}">
-              <i class="bi bi-door-open me-2"></i>
-              {% trans "Комнаты" %}
+            <a class="nav-link py-3 {% if request.resolver_match.view_name == 'upload:orientation' %}active text-primary fw-medium rounded bg-body-tertiary{% endif %}"
+              href="{% url 'upload:orientation' %}">
+              <i class="bi bi-cloud-upload me-3 fs-5"></i>{% trans "Загрузить видео" %}
             </a>
           </li>
           {% if request.user.is_authenticated %}
           <li class="nav-item">
-            <a class="nav-link" href="{% url "rooms:manage" %}">
-              <i class="bi bi-sliders me-2"></i>
-              {% trans "Мои комнаты" %}
+            <a class="nav-link py-3 {% if request.resolver_match.view_name == 'videos:list' %}active text-primary fw-medium rounded bg-body-tertiary{% endif %}"
+              href="{% url 'videos:list' %}">
+              <i class="bi bi-collection-play me-3 fs-5"></i>{% trans "Мои видео" %}
             </a>
           </li>
           {% endif %}
-          
+          <li class="nav-item">
+            <a class="nav-link py-3 {% if request.resolver_match.view_name == 'rooms:list' %}active text-primary fw-medium rounded bg-body-tertiary{% endif %}"
+              href="{% url 'rooms:list' %}">
+              <i class="bi bi-door-open me-3 fs-5"></i>{% trans "Комнаты" %}
+            </a>
+          </li>
+          {% if request.user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link py-3 {% if request.resolver_match.view_name == 'rooms:manage' %}active text-primary fw-medium rounded bg-body-tertiary{% endif %}"
+              href="{% url 'rooms:manage' %}">
+              <i class="bi bi-sliders me-3 fs-5"></i>{% trans "Мои комнаты" %}
+            </a>
+          </li>
+          {% endif %}
+
           {% if request.user.is_authenticated and request.user.is_staff %}
-          <li class="nav-item mt-2">
-            <a class="btn btn-primary w-100" href="{% url 'admin:index' %}">
-              <i class="bi bi-gear me-2"></i>
-              {% trans "Admin-panel" %}
+          <li class="nav-item mt-4">
+            <a class="btn btn-outline-primary w-100 rounded-3 py-2" href="{% url 'admin:index' %}">
+              <i class="bi bi-gear me-2"></i>{% trans "Админ Панель" %}
             </a>
           </li>
           {% endif %}
-
-          <li class="nav-item mt-3">
-            <hr class="dropdown-divider">
-          </li>
-
-          <li class="nav-item mt-3">
-            {% if request.user.is_authenticated %}
-            <div class="dropdown profile-dropdown">
-              <button 
-                class="btn dropdown-toggle bg-transparent d-flex align-items-center border-1 coto-border w-100" 
-                type="button" 
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                {% if request.user.profile.get_small_avatar %}
-                  <img 
-                    src="{{ request.user.profile.get_small_avatar }}" 
-                    class="rounded-circle me-2"
-                    width="32" 
-                    height="32" 
-                    alt="{{ request.user.username }}"
-                  >
-                {% else %}
-                  <img 
-                    src="{% static "images/default_avatar.svg" %}" 
-                    class="rounded-circle me-2"
-                    width="32" 
-                    height="32" 
-                    alt="Avatar"
-                  >
-                {% endif %}
-                <span class="coto-font-medium">{{ request.user.username }}</span>
-              </button>
-              
-              <ul class="dropdown-menu coto-secondary dropdown-menu-end">
-                <li>
-                  <a 
-                    class="dropdown-item coto-btn {% if view_name == 'users:profile' %} coto-primary{% endif %}" 
-                    href="{% url "users:profile" %}"
-                  >
-                    <i class="bi bi-person me-2"></i>
-                    {% trans "Профиль" %}
-                  </a>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <a 
-                    class="dropdown-item coto-btn {% if view_name == 'users:logout' %} coto-primary{% endif %}" 
-                    href="{% url "users:logout" %}"
-                  >
-                    <i class="bi bi-box-arrow-right me-2"></i>
-                    {% trans "Выйти" %}
-                  </a>
-                </li>
-              </ul>
-            </div>
-            {% else %}
-            <a 
-              class="btn coto-btn coto-primary w-100 {% if view_name == 'users:login' %} coto-btn-pressed{% endif %}"
-              {% if view_name != 'users:login' %}href="{% url 'users:login' %}"{% endif %}
-            >
-              <i class="bi bi-box-arrow-in-right me-2"></i>
-              {% trans "Войти" %}
-            </a>
-            {% endif %}
-          </li>
         </ul>
+
+        <div class="mt-auto pt-4 border-top">
+          {% if request.user.is_authenticated %}
+          <div class="d-flex align-items-center mb-3">
+            {% if request.user.profile.get_small_avatar %}
+            <img src="{{ request.user.profile.get_small_avatar }}" class="rounded-circle me-3 object-fit-cover"
+              width="48" height="48" alt="{{ request.user.username }}">
+            {% else %}
+            <img src="{% static 'images/default_avatar.svg' %}" class="rounded-circle me-3" width="48" height="48"
+              alt="Avatar">
+            {% endif %}
+            <div>
+              <div class="fw-bold fs-5">{{ request.user.username }}</div>
+              <a href="{% url 'users:profile' %}" class="text-decoration-none small text-muted">{% trans "Настройки
+                профиля" %}</a>
+            </div>
+          </div>
+          <a class="btn btn-light w-100 text-danger border rounded-3 py-2 fw-medium" href="{% url 'users:logout' %}">
+            <i class="bi bi-box-arrow-right me-2"></i>{% trans "Выйти" %}
+          </a>
+          {% else %}
+          <a class="btn btn-primary w-100 rounded-3 py-3 fw-bold shadow-sm" href="{% url 'users:login' %}">
+            <i class="bi bi-box-arrow-in-right me-2"></i>{% trans "Войти в аккаунт" %}
+          </a>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
 </nav>
+
+<script>
+  // Ensure the mobile theme toggle works as the desktop one
+  document.addEventListener('DOMContentLoaded', function () {
+    const mobileToggle = document.getElementById('theme-toggle-mobile');
+    const desktopToggle = document.getElementById('theme-toggle');
+
+    if (mobileToggle && window.themeManager) {
+      mobileToggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        window.themeManager.toggleTheme();
+
+        // Add animation effect
+        mobileToggle.style.transform = 'rotate(180deg)';
+        setTimeout(() => {
+          mobileToggle.style.transform = '';
+        }, 300);
+      });
+
+      // Sync icon states initially
+      const updateMobileIcon = () => {
+        const desktopIcon = desktopToggle ? desktopToggle.querySelector('i').className : '';
+        const mobileIcon = mobileToggle.querySelector('i');
+        if (mobileIcon && desktopIcon) {
+          mobileIcon.className = desktopIcon;
+        }
+      };
+
+      // Try to sync initially and on theme change
+      updateMobileIcon();
+      window.addEventListener('themeChanged', updateMobileIcon);
+
+      // Monkey patch ThemeManager.updateToggleButton to also update mobile
+      const originalUpdate = window.themeManager.updateToggleButton;
+      window.themeManager.updateToggleButton = function () {
+        originalUpdate.call(this);
+
+        const mobileIcon = mobileToggle.querySelector('i');
+        if (!mobileIcon) return;
+
+        if (this.currentTheme === 'dark') {
+          mobileIcon.className = 'bi bi-sun-fill';
+          mobileToggle.setAttribute('aria-label', 'Переключить на светлую тему');
+          mobileToggle.setAttribute('title', 'Светлая тема');
+        } else {
+          mobileIcon.className = 'bi bi-moon-stars-fill';
+          mobileToggle.setAttribute('aria-label', 'Переключить на тёмную тему');
+          mobileToggle.setAttribute('title', 'Тёмная тема');
+        }
+      };
+      // explicitly call it once to initialize mobile icon correctly
+      window.themeManager.updateToggleButton();
+    }
+  });
+</script>

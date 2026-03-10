@@ -11,7 +11,3 @@ class HomeView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["title"] = _("Coto")
         return context
-
-
-class LoveView(TemplateView):
-    template_name = "homepage/anya-march8.html"
