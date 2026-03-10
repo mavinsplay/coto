@@ -72,7 +72,7 @@ class CustomLoginView(LoginView):
             _("С возвращением, %(username)s!") % {"username": user.username},
         )
 
-        return response # noqa
+        return response  # noqa
 
     def form_invalid(self, form):
         """Handle failed login attempts"""
