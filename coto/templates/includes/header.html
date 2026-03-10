@@ -185,8 +185,7 @@
             {% endif %}
             <div>
               <div class="fw-bold fs-5">{{ request.user.username }}</div>
-              <a href="{% url 'users:profile' %}" class="text-decoration-none small text-muted">{% trans "Настройки
-                профиля" %}</a>
+              <a href="{% url 'users:profile' %}" class="text-decoration-none small text-muted">{% trans "Настройки профиля" %}</a>
             </div>
           </div>
           <a class="btn btn-light w-100 text-danger border rounded-3 py-2 fw-medium" href="{% url 'users:logout' %}">
