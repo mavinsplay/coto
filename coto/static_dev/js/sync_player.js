@@ -201,16 +201,23 @@ function uuidv4() {
   
   // === main sync_player code ===
   document.addEventListener("DOMContentLoaded", () => {
-    const player = videojs("hls-player", {
-      fluid: true,
-      responsive: true,
-      playbackRates: [0.5,0.75,1,1.25,1.5,2],
-      plugins: { qualityLevels: {}, hlsQualitySelector: { displayCurrentQuality: true } }
-    });
-  
-    const videoEl = player.el();
+    const videoEl = document.getElementById("hls-player");
+    if (!videoEl) return;
+
     const roomId  = videoEl.dataset.roomId;
     const isHost  = videoEl.dataset.isHost === "true";
+
+    const player = new Plyr(videoEl, {
+      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
+    });
+    window.videoPlayer = player;
+
+    let hls = null;
+    if (Hls.isSupported()) {
+      hls = window.hls = new Hls();
+      hls.attachMedia(videoEl);
+    }
     const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = `${wsScheme}://${window.location.host}/ws/room/${roomId}/`;
   
@@ -238,7 +245,7 @@ function uuidv4() {
   
     function sendCmd(type) {
       if (suppressEvent || socket.readyState !== WebSocket.OPEN) { suppressEvent = false; return; }
-      const msg = { type, time: player.currentTime(), ts: Date.now() };
+      const msg = { type, time: player.currentTime, ts: Date.now() };
       socket.sendSafe(msg);
     }
   
@@ -253,8 +260,8 @@ function uuidv4() {
   
     if (isHost) {
       setInterval(() => {
-        if (!player.paused() && socket.readyState === WebSocket.OPEN) {
-          socket.sendSafe({ type: "keyframe", time: player.currentTime(), ts: Date.now() });
+        if (!player.paused && socket.readyState === WebSocket.OPEN) {
+          socket.sendSafe({ type: "keyframe", time: player.currentTime, ts: Date.now() });
         }
       }, 5000);
     }
@@ -276,7 +283,11 @@ function uuidv4() {
       const title = item.dataset.title;
   
       suppressEvent = !!suppressSend;
-      player.src({ src: hlsUrl, type: "application/x-mpegURL" });
+      if (Hls.isSupported() && hls) {
+        hls.loadSource(hlsUrl);
+      } else {
+        videoEl.src = hlsUrl;
+      }
       try { if (play) await player.play(); } catch(e){ console.warn("autoplay blocked", e); }
       highlightItem(item);
       setCurrentLabel(season, episode, title);
@@ -323,10 +334,14 @@ function uuidv4() {
   
         if (st.hls_url) {
           suppressEvent = true;
-          player.src({ src: st.hls_url, type: "application/x-mpegURL" });
+          if (Hls.isSupported() && hls) {
+            hls.loadSource(st.hls_url);
+          } else {
+            videoEl.src = st.hls_url;
+          }
         }
         if (target !== null) {
-          player.currentTime(target);
+          player.currentTime = target;
         }
         if (st.is_playing) {
           player.play().catch(()=>{});
@@ -362,7 +377,11 @@ function uuidv4() {
           applyPlaylistChangeLocally(target, { play: true, suppressSend: true });
         } else if (it.hls_url) {
           suppressEvent = true;
-          player.src({ src: it.hls_url, type: "application/x-mpegURL" });
+          if (Hls.isSupported() && hls) {
+            hls.loadSource(it.hls_url);
+          } else {
+            videoEl.src = it.hls_url;
+          }
           player.play().catch(()=>{});
           setTimeout(()=>{ suppressEvent = false; }, 200);
           setCurrentLabel(it.season || "-", it.episode || "-", it.title || "Видео");
@@ -377,17 +396,17 @@ function uuidv4() {
         suppressEvent = true;
         switch (msg.type) {
           case "play":
-            if (target !== null) player.currentTime(target);
+            if (target !== null) player.currentTime = target;
             player.play().catch(()=>{});
             break;
           case "pause":
-            if (target !== null) player.currentTime(target);
+            if (target !== null) player.currentTime = target;
             player.pause();
             break;
           case "seek":
           case "keyframe":
-            if (typeof msg.time === "number" && Math.abs(player.currentTime() - msg.time) > 0.5) {
-              player.currentTime(msg.time);
+            if (typeof msg.time === "number" && Math.abs(player.currentTime - msg.time) > 0.5) {
+              player.currentTime = msg.time;
             }
             break;
         }
@@ -403,8 +422,7 @@ function uuidv4() {
     if (playlistItems.length > 0) {
       setTimeout(() => {
         if (!waitingForInitialState) return;
-        const srcs = player.currentSources && player.currentSources();
-        const hasSrc = Array.isArray(srcs) && srcs.length && (srcs[0].src || player.currentType());
+        const hasSrc = videoEl && videoEl.src && videoEl.src !== "";
         if (!hasSrc) {
           applyPlaylistChangeLocally(playlistItems[0], { play: true, suppressSend: false });
         }
@@ -414,7 +432,8 @@ function uuidv4() {
   
     window.addEventListener("beforeunload", () => {
       try { socket.close(); } catch(e) {}
-      try { player.dispose(); } catch(e){}
+      try { if (player && typeof player.destroy === "function") player.destroy(); } catch(e){}
+      try { if (hls) hls.destroy(); } catch(e){}
     });
   });
   

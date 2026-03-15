@@ -187,7 +187,7 @@
           </div>
           <div class="card-body p-0">
             <div class="video-player-wrapper">
-              <video id="video-player" class="video-js vjs-big-play-centered" controls preload="auto" width="100%" height="auto">
+              <video id="video-player" controls preload="auto" width="100%" height="auto">
                 <source src="{{ video.hls_manifest.url }}" type="application/x-mpegURL">
                 {% trans "Ваш браузер не поддерживает воспроизведение видео." %}
               </video>
@@ -204,7 +204,7 @@
           </div>
           <div class="card-body p-0">
             <div class="video-player-wrapper">
-              <video id="video-player" class="video-js vjs-big-play-centered" controls preload="auto" width="100%" height="auto">
+              <video id="video-player" controls preload="auto" width="100%" height="auto">
                 <source src="{{ video.file.url }}" type="video/mp4">
                 {% trans "Ваш браузер не поддерживает воспроизведение видео." %}
               </video>
@@ -220,20 +220,35 @@
 
 {% block extra_js %}
 {% if video.hls_status == "done" or video.hls_status == "completed" %}
-<link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
-<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.10.0/dist/videojs-http-streaming.min.js"></script>
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    var player = videojs('video-player', {
-      controls: true,
-      autoplay: false,
-      preload: 'auto',
-      fluid: true,
-      responsive: true,
-      aspectRatio: '16:9'
-    });
+    const video = document.getElementById('video-player');
+    const source = video.querySelector('source').src;
+    
+    const defaultOptions = {
+      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
+    };
+
+    if (source.includes('.m3u8')) {
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(source);
+        hls.attachMedia(video);
+        window.hls = hls;
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          window.player = new Plyr(video, defaultOptions);
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        window.player = new Plyr(video, defaultOptions);
+      }
+    } else {
+      window.player = new Plyr(video, defaultOptions);
+    }
   });
 </script>
+<script src="{% static 'js/Video.js' %}"></script>
 {% endif %}
 {% endblock %}
