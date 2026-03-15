@@ -1,5 +1,6 @@
 import datetime
 import json
+import time as _time
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -8,33 +9,86 @@ from django.core.cache import cache
 
 __all__ = ("WatchPartySyncConsumer",)
 
+# ─── Cache key helpers ───────────────────────────────────────────────────────
+
+
+def _state_key(room_id):
+    return f"watchparty_state_{room_id}"
+
+
+def _online_key(room_id):
+    return f"watchparty_online_{room_id}"
+
+
+def _online_add(room_id, username):
+    """Add username to the online set stored in cache."""
+    key = _online_key(room_id)
+    online = cache.get(key) or set()
+    online.add(username)
+    cache.set(key, online, None)
+
+
+def _online_remove(room_id, username):
+    """Remove username from the online set stored in cache."""
+    key = _online_key(room_id)
+    online = cache.get(key) or set()
+    online.discard(username)
+    cache.set(key, online, None)
+
+
+def _online_set(room_id):
+    return cache.get(_online_key(room_id)) or set()
+
+
+# ─── Consumer ────────────────────────────────────────────────────────────────
+
 
 class WatchPartySyncConsumer(AsyncWebsocketConsumer):
+
+    # ──────────────────────────────────────────────────────────────────────
+    # Lifecycle
+    # ──────────────────────────────────────────────────────────────────────
+
     async def connect(self):
         self.party_id = self.scope["url_route"]["kwargs"]["room_id"]
         self.group_name = f"watchparty_{self.party_id}"
         self.user = self.scope["user"]
 
+        # ❌ Block unauthenticated users completely
+        if not self.user.is_authenticated:
+            await self.close(code=4003)
+            return
+
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-        # история чата + участники (как было)
+        # Mark user online
+        _online_add(self.party_id, self.user.username)
+
+        # Send chat history
         history = await self.get_last_messages(limit=50)
         await self.send(
             text_data=json.dumps({"type": "history", "messages": history}),
         )
-        participants = await self.get_participants()
+
+        # Send participants list (with status) to everyone
+        participants = await self.get_participants_with_status()
         await self.send(
             text_data=json.dumps(
-                {"type": "participants", "participants": participants},
+                {
+                    "type": "participants",
+                    "participants": participants,
+                    "count": len(participants),
+                },
             ),
         )
+        # Broadcast updated status to rest of the room
         await self.channel_layer.group_send(
             self.group_name,
             {"type": "participants_update", "participants": participants},
         )
 
-        # Отправляем текущее состояние плеера (если есть) — NEW
+        # Send current player state to the newly connected client
         state = await self.get_watchparty_state()
         if state:
             await self.send(
@@ -42,15 +96,19 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
             )
 
     async def disconnect(self, close_code):
-        participants = await self.get_participants()
-        await self.channel_layer.group_send(
-            self.group_name,
-            {"type": "participants_update", "participants": participants},
-        )
-        await self.channel_layer.group_discard(
-            self.group_name,
-            self.channel_name,
-        )
+        if hasattr(self, "user") and self.user.is_authenticated:
+            _online_remove(self.party_id, self.user.username)
+
+        if hasattr(self, "group_name"):
+            participants = await self.get_participants_with_status()
+            await self.channel_layer.group_send(
+                self.group_name,
+                {"type": "participants_update", "participants": participants},
+            )
+            await self.channel_layer.group_discard(
+                self.group_name,
+                self.channel_name,
+            )
 
     async def receive(self, text_data):
         try:
@@ -61,6 +119,7 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
         msg_type = data.get("type")
 
+        # ── Chat ──────────────────────────────────────────────────────────
         if msg_type == "chat":
             message = data.get("message", "").strip()
             if message:
@@ -91,8 +150,9 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
             return
 
+        # ── Participants refresh ───────────────────────────────────────────
         if msg_type == "participants_update":
-            participants = await self.get_participants()
+            participants = await self.get_participants_with_status()
             await self.channel_layer.group_send(
                 self.group_name,
                 {
@@ -102,17 +162,31 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
             )
             return
 
+        # ── Request current player state (new client asking) ─────────────
+        if msg_type == "request_state":
+            state = await self.get_watchparty_state()
+            if state:
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "type": "player_state",
+                            "state": state,
+                        },
+                    ),
+                )
+
+            return
+
+        # ── Playlist select ───────────────────────────────────────────────
         if msg_type == "playlist_select":
             item = data.get("item", {})
             video_id = item.get("video_id")
-            # Сохраняем текущий video в WatchParty (опционально)
             if video_id:
                 await self.save_watchparty_video(video_id)
 
             await self.set_watchparty_state(
                 time=0.0,
-                ts=data.get("ts", None)
-                or int(__import__("time").time() * 1000),
+                ts=data.get("ts") or int(_time.time() * 1000),
                 is_playing=True,
                 video_id=video_id,
                 hls_url=item.get("hls_url"),
@@ -128,19 +202,42 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
                         if self.user.is_authenticated
                         else "Гость"
                     ),
-                    "ts": data.get("ts", None),
+                    "ts": data.get("ts"),
                 },
             )
             return
 
+        # ── Playback commands ─────────────────────────────────────────────
         if msg_type in ("play", "pause", "seek", "keyframe"):
             try:
                 time_val = float(data.get("time", 0.0))
             except (TypeError, ValueError):
                 time_val = 0.0
 
-            is_playing = True if msg_type in ("play", "keyframe") else False
-            ts = data.get("ts", None) or int(__import__("time").time() * 1000)
+            ts = data.get("ts") or int(_time.time() * 1000)
+
+            # For keyframe: only update is_playing if currently playing
+            # (don't override a pause with a keyframe)
+            if msg_type == "keyframe":
+                current_state = cache.get(_state_key(self.party_id))
+                was_playing = (
+                    current_state.get("is_playing", True)
+                    if current_state
+                    else True
+                )
+                is_playing = was_playing
+                # Don't update state if time goes backward (stale packet)
+                if current_state:
+                    stored_time = current_state.get("time", 0.0)
+                    # Only update if time advanced or big jump
+                    if time_val < stored_time - 1.0:
+                        await self.sync_broadcast(text_data)
+                        return
+            else:
+                is_playing = msg_type in ("play",)
+
+            # For pause, use the time from the message (accurate position)
+            # For seek, same
 
             room = await self.get_room_once()
             hls = None
@@ -160,14 +257,16 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
                 hls_url=hls,
             )
 
-            # Передаем остальным (старое поведение)
             await self.sync_broadcast(text_data)
             return
 
-        # всё остальное — пасс
+        # ── Fallthrough ───────────────────────────────────────────────────
         await self.sync_broadcast(text_data)
 
-    # ========== Group handlers ==========
+    # ──────────────────────────────────────────────────────────────────────
+    # Group event handlers
+    # ──────────────────────────────────────────────────────────────────────
+
     async def chat_message(self, event):
         ts = event.get("timestamp")
         if not ts:
@@ -186,12 +285,13 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
         )
 
     async def participants_update(self, event):
+        participants = event["participants"]
         await self.send(
             text_data=json.dumps(
                 {
                     "type": "participants",
-                    "participants": event["participants"],
-                    "count": len(event["participants"]),
+                    "participants": participants,
+                    "count": len(participants),
                 },
             ),
         )
@@ -211,16 +311,25 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
     async def broadcast(self, event):
         await self.send(text_data=event["text"])
 
-    # ========== Helpers: DB / cache ==========
+    # ──────────────────────────────────────────────────────────────────────
+    # DB / Cache helpers
+    # ──────────────────────────────────────────────────────────────────────
+
     @database_sync_to_async
-    def get_participants(self):
+    def get_participants_with_status(self):
+        """Return list of {username, online} dicts."""
         from rooms.models import WatchParty
 
         try:
             party = WatchParty.objects.get(id=self.party_id)
-            return list(party.participants.values_list("username", flat=True))
+            db_users = list(
+                party.participants.values_list("username", flat=True),
+            )
         except WatchParty.DoesNotExist:
             return []
+
+        online = _online_set(self.party_id)
+        return [{"username": u, "online": u in online} for u in db_users]
 
     @database_sync_to_async
     def get_last_messages(self, limit=50):
@@ -280,7 +389,6 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
         except WatchParty.DoesNotExist:
             return None
 
-    # ---- cached state helpers (no DB migrations) ----
     @database_sync_to_async
     def set_watchparty_state(
         self,
@@ -290,34 +398,26 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
         video_id=None,
         hls_url=None,
     ):
-        key = f"watchparty_state_{self.party_id}"
+        key = _state_key(self.party_id)
         state = {
             "time": float(time or 0.0),
-            "ts": (
-                int(ts)
-                if ts is not None
-                else int(__import__("time").time() * 1000)
-            ),
+            "ts": int(ts) if ts is not None else int(_time.time() * 1000),
             "is_playing": bool(is_playing),
             "video_id": int(video_id) if video_id is not None else None,
             "hls_url": str(hls_url) if hls_url else None,
         }
-        cache.set(
-            key,
-            state,
-            None,
-        )  # timeout=None -> persist until invalidated
+        cache.set(key, state, None)  # persist until invalidated
         return True
 
     @database_sync_to_async
     def get_watchparty_state(self):
         from rooms.models import WatchParty
 
-        key = f"watchparty_state_{self.party_id}"
+        key = _state_key(self.party_id)
         st = cache.get(key)
         if st:
             return st
-        # fallback: try to fill from DB room.video
+        # Fallback: build from DB room.video
         try:
             room = WatchParty.objects.select_related("video").get(
                 id=self.party_id,
@@ -325,7 +425,7 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
             if room.video and getattr(room.video, "hls_manifest", None):
                 return {
                     "time": 0.0,
-                    "ts": int(__import__("time").time() * 1000),
+                    "ts": int(_time.time() * 1000),
                     "is_playing": False,
                     "video_id": room.video.id,
                     "hls_url": room.video.hls_manifest.url,

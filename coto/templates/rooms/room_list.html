@@ -60,15 +60,22 @@
                 </div>
 
                 <div class="card-body d-flex flex-column">
-                    <h5 class="card-title fw-bold mb-2">{{ room.name }}</h5>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title fw-bold mb-0 text-truncate">{{ room.name }}</h5>
+                        <!-- Resume badge placeholder (filled by JS) -->
+                        <div id="resume-badge-{{ room.pk }}" class="resume-badge-small d-none">
+                            <i class="bi bi-clock-history"></i>
+                            <span class="ms-1"></span>
+                        </div>
+                    </div>
                     
                     <div class="mb-3 flex-grow-1">
                         <p class="card-text mb-2">
                             <i class="bi bi-film me-2 text-primary"></i>
                             {% if room.video %}
-                            <strong>{{ room.video.title }}</strong>
+                            <strong>{{ room.video.title|truncatechars:40 }}</strong>
                             {% elif room.playlist %}
-                            <strong>{{ room.playlist.title }}</strong>
+                            <strong>{{ room.playlist.title|truncatechars:40 }}</strong>
                             <span class="badge bg-info ms-2">Плейлист</span>
                             {% endif %}
                         </p>
@@ -184,6 +191,17 @@
     box-shadow: var(--shadow-lg) !important;
 }
 
+.resume-badge-small {
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -200,4 +218,34 @@
 }
 </style>
 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    function formatDuration(secs) {
+        const s = Math.floor(secs);
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = s % 60;
+        if (h > 0) return `${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+        return `${m}:${String(sec).padStart(2,"0")}`;
+    }
+
+    // Check localStorage for each room listed on the page
+    const roomIds = [{% for room in rooms %}{{ room.pk }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+    
+    roomIds.forEach(id => {
+        const key = `room_position_${id}`;
+        try {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                const data = JSON.parse(raw);
+                const badge = document.getElementById(`resume-badge-${id}`);
+                if (badge && data.time > 5) {
+                    badge.classList.remove('d-none');
+                    badge.querySelector('span').textContent = formatDuration(data.time);
+                }
+            }
+        } catch(e) {}
+    });
+});
+</script>
 {% endblock %}
