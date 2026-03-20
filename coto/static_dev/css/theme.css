@@ -679,7 +679,7 @@ span.badge-primary {
 }
 
 .plyr__control--overlaid {
-  background: url('../video/play.PNG') no-repeat center center !important;
+  background: url('../video/play.png') no-repeat center center !important;
   background-size: contain !important;
   background-color: transparent !important;
   border: none !important;
@@ -694,7 +694,7 @@ span.badge-primary {
 
 .plyr--video .plyr__control--overlaid:hover,
 .plyr--video .plyr__control--overlaid:focus {
-  background: url('../video/play.PNG') no-repeat center center !important;
+  background: url('../video/play.png') no-repeat center center !important;
   background-size: contain !important;
   background-color: transparent !important;
   transform: translate(-50%, -50%) scale(1.1) !important;
@@ -707,7 +707,7 @@ span.badge-primary {
 
 /* Play button (when paused) */
 .plyr__controls [data-plyr="play"] {
-  background-image: url('../video/play.PNG') !important;
+  background-image: url('../video/play.png') !important;
   background-position: center center !important;
   background-repeat: no-repeat !important;
   background-size: contain !important;
@@ -721,7 +721,7 @@ span.badge-primary {
 
 /* Pause button (when playing) */
 .plyr--playing .plyr__controls [data-plyr="play"] {
-  background-image: url('../video/pause.PNG') !important;
+  background-image: url('../video/pause.png') !important;
 }
 
 /* ==========================================================================
