@@ -670,15 +670,16 @@ span.badge-primary {
 }
 
 /* ==========================================================================
-    PLYR CUSTOM PLAY BUTTON
+    PLYR CUSTOM PLAY & PAUSE BUTTONS
     ========================================================================== */
 
+/* Overlaid big play button */
 .plyr__control--overlaid svg {
   display: none !important;
 }
 
 .plyr__control--overlaid {
-  background: url('../video/play.png') no-repeat center center !important;
+  background: url('../video/play.PNG') no-repeat center center !important;
   background-size: contain !important;
   background-color: transparent !important;
   border: none !important;
@@ -693,10 +694,34 @@ span.badge-primary {
 
 .plyr--video .plyr__control--overlaid:hover,
 .plyr--video .plyr__control--overlaid:focus {
-  background: url('../video/play.png') no-repeat center center !important;
+  background: url('../video/play.PNG') no-repeat center center !important;
   background-size: contain !important;
   background-color: transparent !important;
   transform: translate(-50%, -50%) scale(1.1) !important;
+}
+
+/* Control bar play/pause buttons */
+.plyr__controls [data-plyr="play"] svg {
+  display: none !important;
+}
+
+/* Play button (when paused) */
+.plyr__controls [data-plyr="play"] {
+  background-image: url('../video/play.PNG') !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+  background-color: transparent !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* Pause button (when playing) */
+.plyr--playing .plyr__controls [data-plyr="play"] {
+  background-image: url('../video/pause.PNG') !important;
 }
 
 /* ==========================================================================
