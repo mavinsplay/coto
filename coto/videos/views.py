@@ -1,6 +1,8 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Q
+from django.http import JsonResponse
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import DeleteView, DetailView, ListView, UpdateView
 
 from upload.models import Video
@@ -127,3 +129,22 @@ class VideoDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         video = self.get_object()
         return video.uploaded_by == self.request.user
+
+
+class VideoProgressAPIView(LoginRequiredMixin, View):
+
+    def get(self, request, *args, **kwargs):
+        videos = Video.objects.filter(
+            uploaded_by=request.user,
+        ).exclude(hls_status__in=["done", "completed", "error", "failed"])
+
+        data = [
+            {
+                "id": video.id,
+                "hls_status": video.hls_status,
+                "hls_progress": video.hls_progress,
+            }
+            for video in videos
+        ]
+
+        return JsonResponse({"videos": data})

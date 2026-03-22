@@ -1227,7 +1227,12 @@
                             <div class="result-title">${r.file.name}</div>
                             <div class="result-meta">
                                 ${r.success 
-                                    ? `Видео "${r.result.title}" успешно загружено` 
+                                    ? `Видео "${r.result.title}" добавлено в очередь на обработку.
+                                       <div class="mt-2">
+                                           <a href="/videos/${r.result.video_id}/" class="btn btn-sm btn-primary">
+                                               <i class="bi bi-play-circle"></i> Перейти к видео
+                                           </a>
+                                       </div>` 
                                     : `Ошибка: ${r.error}`
                                 }
                             </div>

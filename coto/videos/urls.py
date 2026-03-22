@@ -4,6 +4,7 @@ from videos.views import (
     MyVideosListView,
     VideoDeleteView,
     VideoDetailView,
+    VideoProgressAPIView,
     VideoUpdateView,
 )
 
@@ -14,4 +15,5 @@ urlpatterns = [
     path("<int:pk>/", VideoDetailView.as_view(), name="detail"),
     path("<int:pk>/edit/", VideoUpdateView.as_view(), name="edit"),
     path("<int:pk>/delete/", VideoDeleteView.as_view(), name="delete"),
+    path("api/progress/", VideoProgressAPIView.as_view(), name="progress_api"),
 ]

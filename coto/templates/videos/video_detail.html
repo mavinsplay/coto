@@ -59,9 +59,9 @@
               {% endif %}
               
               <!-- Статус обработки -->
-              <div class="mb-3">
+              <div class="mb-3" id="video-progress-section">
                 <h5>{% trans "Статус обработки" %}</h5>
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center" id="status-container">
                   {% if video.hls_status == "done" or video.hls_status == "completed" %}
                     <span class="badge bg-success me-2">
                       <i class="bi bi-check-circle-fill"></i> {% trans "Завершено" %}
@@ -81,17 +81,18 @@
                   {% endif %}
                   
                   {% if video.hls_progress > 0 and video.hls_progress < 100 %}
-                    <span class="text-muted">{{ video.hls_progress }}%</span>
+                    <span class="text-muted ms-2" id="progress-text">{{ video.hls_progress }}%</span>
                   {% endif %}
                 </div>
                 
                 <!-- Прогресс-бар -->
                 {% if video.hls_progress > 0 and video.hls_progress < 100 %}
-                <div class="progress mt-2" style="height: 20px;">
+                <div class="progress mt-2" style="height: 20px;" id="progress-wrapper">
                   <div 
                     class="progress-bar progress-bar-striped progress-bar-animated" 
+                    id="progress-bar"
                     role="progressbar" 
-                    style="width: {{ video.hls_progress }}%;"
+                    style="width: {{ video.hls_progress|stringformat:'.0f' }}%;"
                     aria-valuenow="{{ video.hls_progress }}" 
                     aria-valuemin="0" 
                     aria-valuemax="100"
@@ -250,5 +251,64 @@
   });
 </script>
 <script src="{% static 'js/Video.js' %}"></script>
+{% endif %}
+
+{% if video.hls_status != "done" and video.hls_status != "completed" and video.hls_status != "error" and video.hls_status != "failed" %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    function updateProgress() {
+        fetch("{% url 'videos:progress_api' %}")
+            .then(res => res.json())
+            .then(data => {
+                const v = data.videos.find(v => v.id === {{ video.id }});
+                if (!v) {
+                    // Video is no longer in the processing queue, so it likely finished successfully.
+                    location.reload();
+                    return;
+                }
+                
+                const statusContainer = document.getElementById("status-container");
+                const progressWrapper = document.getElementById("progress-wrapper");
+                const progressBar = document.getElementById("progress-bar");
+                let progressText = document.getElementById("progress-text");
+                
+                if (statusContainer) {
+                    let badgeClass = "bg-secondary";
+                    let iconHtml = '<i class="bi bi-clock"></i>';
+                    let statusText = '{% trans "Ожидает обработки" %}';
+                    
+                    if (v.hls_status === "processing" || v.hls_status === "pending" || v.hls_status === "transcode") {
+                        badgeClass = "bg-primary";
+                        iconHtml = '<i class="bi bi-hourglass-split"></i>';
+                        statusText = '{% trans "Обрабатывается" %}';
+                    }
+                    
+                    let html = `<span class="badge ${badgeClass} me-2">${iconHtml} ${statusText}</span>`;
+                    if (v.hls_progress > 0 && v.hls_progress < 100) {
+                        html += `<span class="text-muted ms-2" id="progress-text">${v.hls_progress}%</span>`;
+                    }
+                    statusContainer.innerHTML = html;
+                    
+                    // Re-acquire reference to progress text just in case it was recreated
+                    progressText = document.getElementById("progress-text");
+                }
+                
+                if (progressWrapper && progressBar) {
+                    progressBar.style.width = v.hls_progress + "%";
+                    progressBar.setAttribute("aria-valuenow", v.hls_progress);
+                    progressBar.textContent = v.hls_progress + "%";
+                }
+                
+                if (v.hls_status === "done" || v.hls_status === "completed" || v.hls_status === "error" || v.hls_status === "failed") {
+                    location.reload();
+                }
+            })
+            .catch(err => console.error("Error polling progress", err));
+    }
+    
+    // Poll every 3 seconds
+    setInterval(updateProgress, 3000);
+});
+</script>
 {% endif %}
 {% endblock %}

@@ -73,7 +73,7 @@ class WatchParty(models.Model):
         return self.name
 
     def clean(self):
-        """Проверяем, что выбрано либо видео, либо плейлист, но не оба."""
+        """Проверяем, что выбрано хотя бы видео или плейлист."""
         from django.core.exceptions import ValidationError
 
         if self.pk is None:
@@ -82,18 +82,13 @@ class WatchParty(models.Model):
         if not self.video and not self.playlist:
             raise ValidationError(_("Выберите либо видео, либо плейлист."))
 
-        if self.video and self.playlist:
-            raise ValidationError(
-                _("Нельзя выбрать и видео, и плейлист одновременно."),
-            )
-
     @property
     def content_type(self):
-        if self.video:
-            return "video"
-
         if self.playlist:
             return "playlist"
+
+        if self.video:
+            return "video"
 
         return None
 

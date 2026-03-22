@@ -120,7 +120,7 @@
   <div class="row g-4">
     {% for video in videos %}
     <div class="col-md-6 col-lg-4">
-      <div class="card video-card h-100">
+      <div class="card video-card h-100" data-video-id="{{ video.id }}">
         <div class="card-img-wrapper">
           {% if video.thumbnail %}
             <img src="{{ video.thumbnail.url }}" class="card-img-top" alt="{{ video.title }}">
@@ -152,16 +152,16 @@
           
           <!-- Прогресс обработки HLS -->
           {% if video.hls_status != "done" and video.hls_status != "completed" and video.hls_progress > 0 %}
-          <div class="mb-3">
+          <div class="mb-3 progress-container">
             <div class="d-flex justify-content-between mb-1">
               <small class="text-muted">{% trans "Прогресс обработки" %}</small>
-              <small class="text-muted">{{ video.hls_progress }}%</small>
+              <small class="text-muted progress-text">{{ video.hls_progress }}%</small>
             </div>
             <div class="progress" style="height: 8px;">
               <div 
                 class="progress-bar progress-bar-striped progress-bar-animated" 
                 role="progressbar" 
-                style="width: {{ video.hls_progress }}%;"
+                style="width: {{ video.hls_progress|stringformat:'.0f' }}%;"
                 aria-valuenow="{{ video.hls_progress }}" 
                 aria-valuemin="0" 
                 aria-valuemax="100"
@@ -264,4 +264,76 @@
   </div>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    function updateProgress() {
+        // Collect IDs of videos that are currently processing
+        const videoCards = document.querySelectorAll(".video-card[data-video-id]");
+        let hasProcessing = false;
+        
+        videoCards.forEach(card => {
+            const statusBadge = card.querySelector(".status-badge");
+            if (statusBadge && (statusBadge.classList.contains("status-processing") || 
+                statusBadge.classList.contains("status-pending") ||
+                statusBadge.classList.contains("status-awaiting-processing") ||
+                statusBadge.classList.contains("status-transcode"))) {
+                hasProcessing = true;
+            }
+        });
+        
+        // If there are no processing videos, stop polling to save resources
+        if (!hasProcessing) return;
+
+        fetch("{% url 'videos:progress_api' %}")
+            .then(res => res.json())
+            .then(data => {
+                data.videos.forEach(v => {
+                    const card = document.querySelector(`.video-card[data-video-id="${v.id}"]`);
+                    if (!card) return;
+                    
+                    const pContainer = card.querySelector(".progress-container");
+                    const pBar = card.querySelector(".progress-bar");
+                    const pText = card.querySelector(".progress-text");
+                    const badge = card.querySelector(".status-badge");
+                    
+                    if (v.hls_status === "done" || v.hls_status === "completed") {
+                        if (badge) {
+                            badge.className = "status-badge status-done";
+                            badge.innerHTML = '<i class="bi bi-check-circle-fill"></i> {% trans "Готово" %}';
+                        }
+                        if (pContainer) pContainer.remove();
+                    } else if (v.hls_status === "error" || v.hls_status === "failed") {
+                        if (badge) {
+                            badge.className = "status-badge status-error";
+                            badge.innerHTML = '<i class="bi bi-x-circle-fill"></i> {% trans "Ошибка" %}';
+                        }
+                        if (pContainer) pContainer.remove();
+                    } else {
+                        if (badge) {
+                            badge.className = `status-badge status-${v.hls_status.replace('_', '-')}`;
+                            badge.innerHTML = '<i class="bi bi-hourglass-split"></i> {% trans "Обработка" %}';
+                        }
+                        if (pBar) {
+                            pBar.style.width = v.hls_progress + "%";
+                            pBar.setAttribute("aria-valuenow", v.hls_progress);
+                        }
+                        if (pText) {
+                            pText.textContent = v.hls_progress + "%";
+                        }
+                    }
+                });
+            })
+            .catch(err => console.error("Error polling progress", err));
+    }
+    
+    // Initial check
+    const cards = document.querySelectorAll(".video-card[data-video-id]");
+    if (cards.length > 0) {
+        setInterval(updateProgress, 3000);
+    }
+});
+</script>
 {% endblock %}
