@@ -10,7 +10,11 @@ from django.conf import settings
 import ffmpeg
 import psutil
 
-__all__ = ("extract_video_metadata", "generate_hls")
+__all__ = (
+    "extract_video_metadata",
+    "generate_hls",
+    "generate_video_thumbnail",
+)
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +84,14 @@ def extract_video_metadata(video_id):
 
         video.save(update_fields=["duration", "file_size"])
         logger.info("[Metadata Task] Сохранено успешно")
+
+        # Генерация превью, если его нет
+        if not video.thumbnail:
+            logger.info(
+                "[Metadata Task] Превью не найдено, запускаем генерацию...",
+            )
+            generate_video_thumbnail(video_id)
+
     except Video.DoesNotExist:
         logger.error(f"[Metadata Task] Видео {video_id} не найдено")
     except Exception as e:
@@ -142,6 +154,98 @@ def try_update_video_progress(
         video._last_progress_update["time"] = time.time()
     except Exception:
         logger.exception("Could not save video progress")
+
+
+def generate_video_thumbnail(video_id):
+    """
+    Генерирует превью для видео, если оно отсутствует.
+    """
+    from django.core.files.base import ContentFile
+    from upload.models import Video
+    import tempfile
+
+    try:
+        video = Video.objects.get(pk=video_id)
+        if video.thumbnail:
+            logger.info(
+                f"[Thumbnail Task] Превью уже существует для видео {video_id}",
+            )
+            return
+
+        file_path = Path(video.file.path)
+        if not file_path.exists():
+            logger.error(f"[Thumbnail Task] Файл видео {file_path} не найден")
+            return
+
+        ss_time = "00:00:01"
+
+        with tempfile.NamedTemporaryFile(
+            suffix=".jpg",
+            delete=False,
+        ) as tmp_file:
+            tmp_path = tmp_file.name
+
+        try:
+            # Команда для извлечения одного кадра
+            cmd = [
+                "ffmpeg",
+                "-y",
+                "-ss",
+                ss_time,
+                "-i",
+                str(file_path),
+                "-vframes",
+                "1",
+                "-q:v",
+                "2",
+                "-f",
+                "image2",
+                tmp_path,
+            ]
+
+            logger.info(f"[Thumbnail Task] Запуск ffmpeg: {' '.join(cmd)}")
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                logger.error(
+                    f"[Thumbnail Task] Ошибка ffmpeg: {result.stderr}",
+                )
+                cmd[cmd.index("-ss") + 1] = "00:00:00"
+                result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if (
+                result.returncode == 0
+                and Path(tmp_path).exists()
+                and os.path.getsize(tmp_path) > 0
+            ):
+                with Path(tmp_path).open("rb") as f:
+                    video.thumbnail.save(
+                        f"{file_path.stem}_thumb.jpg",
+                        ContentFile(f.read()),
+                        save=True,
+                    )
+
+                logger.info(
+                    f"[Thumbnail Task] Превью усп\
+                        ешно сгенерировано для видео {video_id}",
+                )
+            else:
+                logger.error(
+                    "[Thumbnail Task] Не удалось создать файл превью",
+                )
+
+        finally:
+            if Path(tmp_path).exists():
+                Path(tmp_path).unlink()
+
+    except Video.DoesNotExist:
+        logger.error(f"[Thumbnail Task] Видео {video_id} не найдено")
+    except Exception as e:
+        logger.error(
+            f"[Thumbnail Task] Ошибка при генерации пр\
+                евью для видео {video_id}: {e}",
+            exc_info=True,
+        )
 
 
 def _ffprobe_duration(path):
