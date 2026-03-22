@@ -1,0 +1,130 @@
+/* ─── Effects Panel (Glassmorphism) ──────────────────────────────────────── */
+.plyr__effects-panel {
+    position: absolute;
+    bottom: 60px;
+    right: 10px;
+    background: rgba(15, 15, 15, 0.75);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    min-width: 140px;
+}
+
+.plyr__effects-panel.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: all;
+}
+
+.plyr__effects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.effect-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.effect-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.effect-btn:active {
+    transform: scale(0.9);
+}
+
+.blur-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.blur-label {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ─── Emoji Animations ──────────────────────────────────────────────────── */
+#effects-container {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 50;
+}
+
+.floating-emoji {
+    position: absolute;
+    bottom: -50px;
+    font-size: 2.5rem;
+    user-select: none;
+    animation: float-up 3s ease-out forwards;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.3));
+    z-index: 100;
+}
+
+@keyframes float-up {
+    0% {
+        transform: translateY(0) scale(0.5) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(-20px) scale(1.2) rotate(var(--rand-rot));
+    }
+    100% {
+        transform: translateY(-400px) scale(0.8) rotate(calc(var(--rand-rot) * 2));
+        opacity: 0;
+    }
+}
+
+/* ─── Blur Effect ──────────────────────────────────────────────────────── */
+.video-blur video, 
+.video-blur .plyr__video-wrapper {
+    filter: blur(15px);
+    transition: filter 0.5s ease;
+}
+
+video:not(.video-blur video) {
+    transition: filter 0.5s ease;
+}
+
+/* ─── Mobile Adjustments ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .plyr__effects-panel {
+        bottom: 50px;
+        right: 5px;
+        padding: 8px;
+    }
+    
+    .floating-emoji {
+        font-size: 2rem;
+    }
+}

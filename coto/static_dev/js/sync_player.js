@@ -219,6 +219,37 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   window.videoPlayer = player;
 
+  // ── Effects initialization ──────────────────────────────────────────────
+  let effectsManager = null;
+  player.on('ready', () => {
+    // We'll initialize effectsManager after socket is ready to pass it
+    // But we can add the button now
+    const controls = player.elements.controls;
+    if (controls) {
+      const volumeContainer = controls.querySelector('.plyr__volume');
+      const effectsBtn = document.createElement('button');
+      effectsBtn.type = 'button';
+      effectsBtn.className = 'plyr__control plyr__control--effects';
+      effectsBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+          <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.882 1.882l1.937.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.882 1.882l-.645 1.937c-.11.33-.576.33-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.882-1.882l-1.937-.645c-.33-.11-.33-.576 0-.686l1.937-.645a2.89 2.89 0 0 0 1.882-1.882l.645-1.937zM4.333 2.667c.06-.18.313-.18.373 0l.35 1.05a1.577 1.577 0 0 0 1.027 1.027l1.05.35c.18.06.18.313 0 .373l-1.05.35a1.577 1.577 0 0 0-1.027 1.027l-.35 1.05c-.06.18-.313.18-.373 0l-.35-1.05a1.577 1.577 0 0 0-1.027-1.027l-1.05-.35c-.18-.06-.18-.313 0-.373l1.05-.35a1.577 1.577 0 0 0 1.027-1.027l.35-1.05zM12.333 1.333c.06-.18.313-.18.373 0l.35 1.05a1.577 1.577 0 0 0 1.027 1.027l1.05.35c.18.06.18.313 0 .373l-1.05.35a1.577 1.577 0 0 0-1.027 1.027l-.35 1.05c-.06.18-.313.18-.373 0l-.35-1.05a1.577 1.577 0 0 0-1.027-1.027l-1.05-.35c-.18-.06-.18-.313 0-.373l1.05-.35a1.577 1.577 0 0 0 1.027-1.027l.35-1.05z"/>
+        </svg>
+        <span class="plyr__tooltip">Эффекты</span>
+      `;
+      
+      effectsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (effectsManager) effectsManager.togglePanel();
+      });
+
+      if (volumeContainer) {
+          volumeContainer.insertAdjacentElement('afterend', effectsBtn);
+      } else {
+          controls.appendChild(effectsBtn);
+      }
+    }
+  });
+
   let hls = null;
   if (Hls.isSupported()) {
     hls = window.hls = new Hls({
@@ -243,6 +274,10 @@ document.addEventListener("DOMContentLoaded", () => {
     clientId: uuidv4(),
     requestStateOnOpen: true,
   });
+  window.roomSocket = socket;
+
+  // Initialize EffectsManager once socket is ready
+  effectsManager = new EffectsManager(player, socket);
 
   const playlistItems = document.querySelectorAll(".playlist-item");
   const currentEpisodeLabel = document.getElementById("current-episode");
@@ -527,6 +562,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       waitingForInitialState = false;
       return;
+    }
+
+    // ── effect (emoji/blur) ──
+    if (msg.type === "effect") {
+        if (effectsManager) {
+            effectsManager.handleEffect(msg);
+        }
+        return;
     }
 
     // other types (chat/participants/history) handled by chat.js
