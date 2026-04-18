@@ -64,6 +64,13 @@
                                     <i class="bi bi-collection-play me-2"></i>
                                     {% trans "Плейлист" %}
                                 </label>
+
+                                <input type="radio" class="btn-check" name="{{ form.content_choice.name }}" 
+                                       id="content_external" value="external">
+                                <label class="btn btn-outline-primary" for="content_external">
+                                    <i class="bi bi-youtube me-2"></i>
+                                    {% trans "YouTube/Google Диск" %}
+                                </label>
                             </div>
                         </div>
 
@@ -107,6 +114,21 @@
                                 {% trans "У вас пока нет созданных плейлистов." %}
                             </div>
                             {% endif %}
+</div>
+
+                        <!-- External URL Selection -->
+                        <div class="mb-4 d-none" id="external-section">
+                            <label for="{{ form.external_url.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-link-45deg me-2 text-primary"></i>
+                                {{ form.external_url.label }}
+                            </label>
+                            {{ form.external_url }}
+                            {% if form.external_url.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.external_url.errors }}
+                            </div>
+                            {% endif %}
+                            <small class="form-text text-muted">{% trans "Вставьте прямую ссылку на видео с YouTube или из Google Диска. Ваш кастомный плеер и синхронизация будут сохранены!" %}</small>
                         </div>
 
                         <!-- Room Image -->
@@ -248,8 +270,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     const videoRadio = document.getElementById('content_video');
     const playlistRadio = document.getElementById('content_playlist');
+    const externalRadio = document.getElementById('content_external');
     const videoSection = document.getElementById('video-section');
     const playlistSection = document.getElementById('playlist-section');
+    const externalSection = document.getElementById('external-section');
     const isPrivateCheck = document.getElementById('{{ form.is_private.id_for_label }}');
     const privateOptions = document.getElementById('private-options');
     const generateCodeCheck = document.getElementById('{{ form.generate_code.id_for_label }}');
@@ -260,6 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (this.checked) {
             videoSection.classList.remove('d-none');
             playlistSection.classList.add('d-none');
+            if(externalSection) externalSection.classList.add('d-none');
         }
     });
     
@@ -267,9 +292,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (this.checked) {
             videoSection.classList.add('d-none');
             playlistSection.classList.remove('d-none');
+            if(externalSection) externalSection.classList.add('d-none');
         }
     });
-    
+
+    if(externalRadio) {
+        externalRadio.addEventListener('change', function() {
+            if (this.checked) {
+                videoSection.classList.add('d-none');
+                playlistSection.classList.add('d-none');
+                if(externalSection) externalSection.classList.remove('d-none');
+            }
+        });
+    }
+
     // Private room toggle
     isPrivateCheck.addEventListener('change', function() {
         if (this.checked) {

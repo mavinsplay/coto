@@ -77,6 +77,8 @@
                             {% elif room.playlist %}
                             <strong>{{ room.playlist.title|truncatechars:40 }}</strong>
                             <span class="badge bg-info ms-2">Плейлист</span>
+                            {% elif room.external_url %}
+                            <strong>{{ room.external_title|default:"Видео из внешней ссылки"|truncatechars:40 }}</strong>
                             {% endif %}
                         </p>
                         <p class="card-text text-muted small mb-0">
@@ -122,9 +124,6 @@
                                         {% trans "Подключиться" %}
                                     </button>
                                 </form>
-                                <a href="{% url 'rooms:detail' room.pk %}" class="btn btn-outline-secondary">
-                                    <i class="bi bi-eye"></i>
-                                </a>
                             {% endif %}
                         {% else %}
                             <a href="{% url 'login' %}" class="btn btn-primary w-100">
