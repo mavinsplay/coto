@@ -27,6 +27,19 @@ class WatchParty(models.Model):
         blank=True,
         null=True,
     )
+    external_url = models.URLField(
+        _("Внешняя ссылка на видео"),
+        blank=True,
+        null=True,
+        help_text=_("Используется, если видео не загружено на сайт"),
+    )
+    external_title = models.CharField(
+        _("Название внешнего видео"),
+        max_length=300,
+        blank=True,
+        null=True,
+        help_text=_("Заполняется автоматически при сохранении"),
+    )
 
     room_image = models.ImageField(
         verbose_name=_("Изображение комнаты"),
@@ -79,8 +92,10 @@ class WatchParty(models.Model):
         if self.pk is None:
             return
 
-        if not self.video and not self.playlist:
-            raise ValidationError(_("Выберите либо видео, либо плейлист."))
+        if not self.video and not self.playlist and not self.external_url:
+            raise ValidationError(
+                _("Выберите видео, плейлист или укажите ссылку."),
+            )
 
     @property
     def content_type(self):
@@ -89,6 +104,9 @@ class WatchParty(models.Model):
 
         if self.video:
             return "video"
+
+        if self.external_url:
+            return "external"
 
         return None
 

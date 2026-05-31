@@ -5,6 +5,7 @@ sorl-thumbnail==12.11.0
 requests==2.32.5
 django-cleanup==9.0
 python-dotenv==1.0.1
+yt-dlp==2026.3.17
 psycopg2-binary==2.9.10
 ffmpeg-python==0.2.0
 celery==5.5.3
@@ -15,4 +16,5 @@ channels_redis==4.3.0
 daphne==4.2.1
 colorlog==6.9.0
 psutil==7.0.0
+httpx==0.28.1
 git+https://github.com/juliomalegria/django-chunked-upload.git@69dfedf148fe7793e372116ca3c88187f5d90ea2

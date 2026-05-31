@@ -8,6 +8,7 @@ class EffectsManager {
         this.container = null;
         this.panel = null;
         this.blurEnabled = false;
+        this.onToggle = null; // called when panel is toggled (for mutual exclusion)
         this.init();
     }
 
@@ -73,6 +74,11 @@ class EffectsManager {
 
     togglePanel() {
         this.panel.classList.toggle('active');
+        if (this.onToggle) this.onToggle();
+    }
+
+    hidePanel() {
+        if (this.panel) this.panel.classList.remove('active');
     }
 
     sendEffect(subType, data) {

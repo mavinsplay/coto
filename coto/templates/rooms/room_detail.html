@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load i18n %}
 
 {% block content %}
 <div class="container py-4">
@@ -17,16 +18,8 @@
       </span>
       {% if room.external_url %}
       <span class="badge bg-dark rounded-pill px-3 py-2 source-badge">
-        {% if "youtube" in room.external_url.lower or "youtu.be" in room.external_url.lower %}
-        <i class="bi bi-youtube yt-icon me-1"></i>
-        YouTube
-        {% elif "drive.google.com" in room.external_url.lower %}
-        <i class="bi bi-google drive-icon me-1"></i>
-        Google Drive
-        {% else %}
         <i class="bi bi-link-45deg generic-icon me-1"></i>
-        Внешний источник
-        {% endif %}
+        {% trans "Внешний источник" %}
       </span>
       {% endif %}
     </div>

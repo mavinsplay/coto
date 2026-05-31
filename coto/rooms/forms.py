@@ -15,7 +15,11 @@ class RoomCreateForm(forms.ModelForm):
 
     content_choice = forms.ChoiceField(
         label=_("Тип контента"),
-        choices=[("video", _("Одно видео")), ("playlist", _("Плейлист"))],
+        choices=[
+            ("video", _("Одно видео")),
+            ("playlist", _("Плейлист")),
+            ("external", _("Видео по ссылке")),
+        ],
         widget=forms.RadioSelect(attrs={"class": "form-check-input"}),
         initial="video",
     )
@@ -32,6 +36,17 @@ class RoomCreateForm(forms.ModelForm):
         label=_("Выберите плейлист"),
         required=False,
         widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
+    external_url = forms.URLField(
+        label=_("Ссылка на видео"),
+        required=False,
+        widget=forms.URLInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "https://example.com/video.mp4",
+            },
+        ),
     )
 
     generate_code = forms.BooleanField(
@@ -104,22 +119,31 @@ class RoomCreateForm(forms.ModelForm):
         content_choice = cleaned_data.get("content_choice")
         video = cleaned_data.get("video")
         playlist = cleaned_data.get("playlist")
+        external_url = cleaned_data.get("external_url")
         is_private = cleaned_data.get("is_private")
         access_code = cleaned_data.get("access_code")
         generate_code = cleaned_data.get("generate_code")
 
         # Проверяем, что выбран контент
-        if content_choice == "video" and not video:  # noqa: R506
+        if content_choice == "video" and not video:
             raise forms.ValidationError(_("Выберите видео для комнаты"))
 
-        elif content_choice == "playlist" and not playlist:
+        if content_choice == "playlist" and not playlist:
             raise forms.ValidationError(_("Выберите плейлист для комнаты"))
 
-        # Очищаем неиспользуемое поле
+        if content_choice == "external" and not external_url:
+            raise forms.ValidationError(_("Укажите ссылку на видео"))
+
+        # Очищаем неиспользуемые поля
         if content_choice == "video":
             cleaned_data["playlist"] = None
-        else:
+            cleaned_data["external_url"] = ""
+        elif content_choice == "playlist":
             cleaned_data["video"] = None
+            cleaned_data["external_url"] = ""
+        elif content_choice == "external":
+            cleaned_data["video"] = None
+            cleaned_data["playlist"] = None
 
         # Генерируем или валидируем код доступа для приватных комнат
         if is_private:
@@ -141,6 +165,63 @@ class RoomCreateForm(forms.ModelForm):
 
         return cleaned_data
 
+    def clean_external_url(self):
+        url = self.cleaned_data.get("external_url")
+        if not url:
+            return url
+
+        # ── Google Drive: bypass yt-dlp validation ───────────────────────────
+        if "drive.google.com" in url.lower():
+            import re
+
+            file_id_match = re.search(r"[-\w]{25,}", url)
+            if not file_id_match:
+                raise forms.ValidationError(
+                    _(
+                        "Не удалось найти идентификатор файла "
+                        "в ссылке Google Диска.",
+                    ),
+                )
+
+            self.external_title = _("Файл из облака")
+            return url
+
+        # ── YouTube and others: validate via yt-dlp ──────────────────────────
+        try:
+            import yt_dlp
+
+            ydl_opts = {
+                "quiet": True,
+                "skip_download": True,
+                "nocheckcertificate": True,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                # Сохраняем название для использования в save()
+                self.external_title = info.get("title", "")
+        except Exception as e:
+            error_msg = str(e)
+            if (
+                "Failed to resolve" in error_msg
+                or "getaddrinfo failed" in error_msg
+            ):
+                raise forms.ValidationError(
+                    _(
+                        "Не удалось найти указанный адрес (ошибка DNS). "
+                        "Проверьте правильность написания ссылки.",
+                    ),
+                )
+
+            raise forms.ValidationError(
+                _(
+                    "Не удалось получить информацию о видео. "
+                    "Убедитесь, что ссылка корректна и доступна: %(error)s",
+                )
+                % {"error": error_msg},
+            )
+
+        return url
+
     def save(self, commit=True):
         instance = super().save(commit=False)
 
@@ -149,18 +230,38 @@ class RoomCreateForm(forms.ModelForm):
         if content_choice == "video":
             instance.video = self.cleaned_data.get("video")
             instance.playlist = None
-        else:
+            instance.external_url = ""
+        elif content_choice == "playlist":
             instance.playlist = self.cleaned_data.get("playlist")
             instance.video = None
+            instance.external_url = ""
+        elif content_choice == "external":
+            instance.external_url = self.cleaned_data.get("external_url")
+            instance.video = None
+            instance.playlist = None
+            # Используем название, полученное во время валидации
+            if hasattr(self, "external_title"):
+                instance.external_title = self.external_title
+            elif instance.external_url and not instance.external_title:
+                try:
+                    import yt_dlp
+
+                    ydl_opts = {
+                        "quiet": True,
+                        "skip_download": True,
+                        "nocheckcertificate": True,
+                    }
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(
+                            instance.external_url,
+                            download=False,
+                        )
+                        instance.external_title = info.get("title", "")
+                except Exception:
+                    pass
 
         if commit:
-            # Сохраняем без вызова full_clean() чтобы обойти валидацию модели
-            instance.save(
-                force_insert=False,
-                force_update=False,
-                using=None,
-                update_fields=None,
-            )
+            instance.save()
             self.save_m2m()
 
         return instance

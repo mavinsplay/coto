@@ -1,6 +1,8 @@
 from django.urls import path
 
 from rooms.views import (
+    ExternalStreamView,
+    google_drive_proxy_view,
     JoinPrivateRoomView,
     JoinRoomView,
     LeaveRoomView,
@@ -25,4 +27,6 @@ urlpatterns = [
     path("<int:pk>/delete/", RoomDeleteView.as_view(), name="delete"),
     path("<int:pk>/join/", JoinRoomView.as_view(), name="join"),
     path("<int:pk>/leave/", LeaveRoomView.as_view(), name="leave"),
+    path("<int:pk>/stream/", ExternalStreamView.as_view(), name="stream"),
+    path("<int:pk>/proxy/", google_drive_proxy_view, name="gdrive_proxy"),
 ]

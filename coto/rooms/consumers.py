@@ -90,10 +90,9 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
         # Send current player state to the newly connected client
         state = await self.get_watchparty_state()
-        if state:
-            await self.send(
-                text_data=json.dumps({"type": "player_state", "state": state}),
-            )
+        await self.send(
+            text_data=json.dumps({"type": "player_state", "state": state}),
+        )
 
     async def disconnect(self, close_code):
         if hasattr(self, "user") and self.user.is_authenticated:
@@ -165,16 +164,14 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
         # ── Request current player state (new client asking) ─────────────
         if msg_type == "request_state":
             state = await self.get_watchparty_state()
-            if state:
-                await self.send(
-                    text_data=json.dumps(
-                        {
-                            "type": "player_state",
-                            "state": state,
-                        },
-                    ),
-                )
-
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "type": "player_state",
+                        "state": state,  # can be None
+                    },
+                ),
+            )
             return
 
         # ── Playlist select ───────────────────────────────────────────────
@@ -216,10 +213,26 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
 
             ts = data.get("ts") or int(_time.time() * 1000)
 
+            current_state = cache.get(_state_key(self.party_id))
+
+            # ── Stale-join protection ──────────────────────────────────────
+            # If an active room has significant progress and receives a
+            # command at t≈0 from a play/pause/seek, this is almost certainly
+            # a cold-start event from a joining client whose player hasn't
+            # synced yet. Discard the state update (but still broadcast for
+            # any UI that needs it). Only keyframes use the separate backtrack
+            # check below, so this guard applies to play/pause/seek only.
+            if msg_type in ("play", "pause", "seek") and current_state:
+                stored_time = current_state.get("time", 0.0)
+                if stored_time > 5.0 and time_val < 1.0:
+                    # Looks like a fresh-join at t=0 — broadcast but don't
+                    # overwrite the real cached time.
+                    await self.sync_broadcast(text_data)
+                    return
+
             # For keyframe: only update is_playing if currently playing
             # (don't override a pause with a keyframe)
             if msg_type == "keyframe":
-                current_state = cache.get(_state_key(self.party_id))
                 was_playing = (
                     current_state.get("is_playing", True)
                     if current_state
@@ -235,9 +248,6 @@ class WatchPartySyncConsumer(AsyncWebsocketConsumer):
                         return
             else:
                 is_playing = msg_type in ("play",)
-
-            # For pause, use the time from the message (accurate position)
-            # For seek, same
 
             room = await self.get_room_once()
             hls = None

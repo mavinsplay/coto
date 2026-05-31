@@ -68,8 +68,8 @@
                                 <input type="radio" class="btn-check" name="{{ form.content_choice.name }}" 
                                        id="content_external" value="external">
                                 <label class="btn btn-outline-primary" for="content_external">
-                                    <i class="bi bi-youtube me-2"></i>
-                                    {% trans "YouTube/Google Диск" %}
+                                    <i class="bi bi-link-45deg me-2"></i>
+                                    {% trans "Внешняя ссылка" %}
                                 </label>
                             </div>
                         </div>
@@ -128,7 +128,7 @@
                                 {{ form.external_url.errors }}
                             </div>
                             {% endif %}
-                            <small class="form-text text-muted">{% trans "Вставьте прямую ссылку на видео с YouTube или из Google Диска. Ваш кастомный плеер и синхронизация будут сохранены!" %}</small>
+                            <small class="form-text text-muted">{% trans "Вставьте прямую ссылку на видео. Ваш кастомный плеер и синхронизация будут сохранены!" %}</small>
                         </div>
 
                         <!-- Room Image -->
