@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy as _
 from upload.models import Video
 from upload.validators import validate_video_extension
 
-
 __all__ = ["SingleVideoForm", "SeriesVideoForm"]
 
 

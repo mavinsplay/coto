@@ -7,7 +7,6 @@ from django.views.generic import DeleteView, DetailView, ListView, UpdateView
 
 from upload.models import Video
 
-
 __all__ = []
 
 

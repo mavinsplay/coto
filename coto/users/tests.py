@@ -4,7 +4,6 @@ from django.urls import reverse
 
 from users.models import Profile
 
-
 __all__ = []
 
 

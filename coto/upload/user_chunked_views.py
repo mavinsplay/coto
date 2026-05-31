@@ -19,7 +19,6 @@ from upload.permissions import (
     validate_video_extension,
 )
 
-
 __all__ = [
     "UserChunkedUploadView",
     "UserChunkedUploadCompleteView",

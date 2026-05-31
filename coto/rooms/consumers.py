@@ -6,7 +6,6 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.cache import cache
 
-
 __all__ = ("WatchPartySyncConsumer",)
 
 # ─── Cache key helpers ───────────────────────────────────────────────────────

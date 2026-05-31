@@ -9,7 +9,6 @@ from django.utils.translation import gettext_lazy as _
 from upload.models import Playlist, PlaylistItem, Video
 from upload.widgets import ChunkedAdminFileWidget
 
-
 __all__ = ["VideoAdmin"]
 
 

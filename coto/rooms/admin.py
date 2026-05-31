@@ -54,10 +54,10 @@ class WatchPartyAdmin(admin.ModelAdmin):
     def get_access_code(self, obj):
         if obj.is_private and obj.access_code:
             return format_html(
-                '<span style="background-color: #fff\
-                    3cd; padding: 4px 8px; border-radius: 4px; '
-                'font-weight: bold; font-family: monosp\
-                    ace; letter-spacing: 2px;">{}</span>',
+                "<span style='background-color: #fff3cd;"
+                " padding: 4px 8px; border-radius: 4px;"
+                " font-weight: bold; font-family: monospace;"
+                " letter-spacing: 2px;'>{}</span>",
                 obj.access_code,
             )
 

@@ -14,7 +14,6 @@ from rooms.views import (
     RoomUpdateView,
 )
 
-
 app_name = "rooms"
 
 urlpatterns = [

@@ -8,7 +8,6 @@ from django.views.generic import CreateView, TemplateView
 from upload.forms import SeriesVideoForm, SingleVideoForm
 from upload.models import Video
 
-
 __all__ = [
     "UploadOrientationView",
     "SingleVideoUploadView",

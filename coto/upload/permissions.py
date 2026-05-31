@@ -1,6 +1,5 @@
 from django.core.exceptions import PermissionDenied
 
-
 __all__ = [
     "check_user_can_upload",
     "check_user_owns_playlist",

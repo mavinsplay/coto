@@ -7,7 +7,6 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from upload.models import Video
 
-
 __all__ = [
     "AdminChunkedUploadView",
     "AdminChunkedUploadCompleteView",

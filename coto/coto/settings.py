@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 from coto import utils
 
-
 __all__ = ()
 
 load_dotenv()
